@@ -103,13 +103,7 @@ class SignInAPI(Resource):
 
         if row is not None:
             if bcrypt.checkpw(self.password.encode('utf-8'), row['password'].encode('utf-8')):
-                access_token = create_access_token(identity=row['id'])
-                refresh_token = create_refresh_token(identity=row['id'])
-                resp = make_response({'login': True}, 200)
-                set_access_cookies(resp, access_token)
-                set_refresh_cookies(resp, refresh_token)
-
-                return resp
+                return get_token(row['id'])
             else:
                 return make_response({'message': 'Password does not match.'}, 400)
         else:
@@ -129,3 +123,12 @@ class TokenAPI(Resource):
         set_access_cookies(resp, access_token)
 
         return resp
+
+def get_token(user):
+    access_token = create_access_token(identity=user)
+    refresh_token = create_refresh_token(identity=user)
+    resp = make_response({'login': True}, 200)
+    set_access_cookies(resp, access_token)
+    set_refresh_cookies(resp, refresh_token)
+
+    return resp
