@@ -17,7 +17,11 @@ app.config['MAIL_PORT'] = config['MAIL']['MAIL_PORT']
 app.config['MAIL_USERNAME'] = config['MAIL']['MAIL_USERNAME']
 app.config['MAIL_PASSWORD'] = config['MAIL']['MAIL_PASSWORD']
 app.config['MAIL_USE_SSL'] = config['MAIL']['MAIL_USE_SSL']
-app.config['JWT_SECRET_KEY'] = config['DEFAULT']['JWT_SECRET_KEY']
+
+app.config['JWT_SECRET_KEY'] = config['JWT']['JWT_SECRET_KEY']
+app.config['JWT_COOKIE_SECURE'] = config['JWT']['JWT_COOKIE_SECURE']
+app.config['JWT_TOKEN_LOCATION'] = config['JWT']['JWT_TOKEN_LOCATION']
+app.config['JWT_COOKIE_CSRF_PROTECT'] = config['JWT']['JWT_COOKIE_CSRF_PROTECT']
 
 jwt = JWTManager(app)
 mail = Mail(app)

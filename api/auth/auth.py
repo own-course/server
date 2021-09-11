@@ -1,7 +1,10 @@
 from flask import make_response
 from flask_restx import Namespace, Resource, fields
 from flask_mail import Mail, Message
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import (
+    create_access_token, create_refresh_token, set_access_cookies,
+    set_refresh_cookies, jwt_required, get_jwt_identity
+)
 from database.database import Database
 import bcrypt
 import random
@@ -97,9 +100,28 @@ class SignInAPI(Resource):
 
         if row is not None:
             if bcrypt.checkpw(self.password.encode('utf-8'), row['password'].encode('utf-8')):
-                access_token = create_access_token(identity=self.email)
-                return make_response({'access_token': access_token}, 200)
+                access_token = create_access_token(identity=row['id'])
+                refresh_token = create_refresh_token(identity=row['id'])
+                resp = make_response({'login': True}, 200)
+                set_access_cookies(resp, access_token)
+                set_refresh_cookies(resp, refresh_token)
+
+                return resp
             else:
                 return make_response({'message': 'Password does not match.'}, 400)
         else:
             return make_response("User does not exist.", 400)
+
+@auth.route('/token/refresh')
+class TokenAPI(Resource):
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+    @jwt_required(refresh=True)
+    def get(self):
+        user_id = get_jwt_identity()
+        resp = make_response({'result': True}, 200)
+        access_token = create_access_token(identity=user_id)
+        set_access_cookies(resp, access_token)
+
+        return resp
