@@ -39,6 +39,7 @@ class EmailAuthAPI(Resource):
 
     @auth.expect(model_auth_email)
     def post(self):
+        """이메일 인증코드 전송"""
         msg = Message('OwnCourse 회원가입 인증 메일입니다.', sender='owncourse2021@gmail.com', recipients=[self.email])
         msg.body = f'인증코드 : {self.code}'
         mail = Mail()
@@ -61,6 +62,7 @@ class SignUpAPI(Resource):
 
     @auth.expect(model_email)
     def post(self):
+        """이메일 회원가입"""
         value = {
             'email': self.email,
             'password': self.password.decode('utf-8'),
@@ -89,6 +91,7 @@ class SignInAPI(Resource):
 
     @auth.expect(model_email)
     def post(self):
+        """이메일 로그인"""
         value = {
             'email': self.email
         }
@@ -119,6 +122,7 @@ class TokenAPI(Resource):
 
     @jwt_required(refresh=True)
     def get(self):
+        """resfresh token으로 access token 갱신"""
         user_id = get_jwt_identity()
         resp = make_response({'result': True}, 200)
         access_token = create_access_token(identity=user_id)
