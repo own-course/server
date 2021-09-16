@@ -1,10 +1,33 @@
 from flask import Flask
+from flask_restx import Api
+from api.auth.auth import auth
+from api.auth.oauth import oauth
+from flask_mail import Mail
+from flask_jwt_extended import JWTManager
 import configparser
-
-app = Flask(__name__)
 
 config = configparser.ConfigParser()
 config.read_file(open('config/config.ini'))
 
+app = Flask(__name__)
+api = Api(app)
+
+app.config['MAIL_SERVER'] = config['MAIL']['MAIL_SERVER']
+app.config['MAIL_PORT'] = config['MAIL']['MAIL_PORT']
+app.config['MAIL_USERNAME'] = config['MAIL']['MAIL_USERNAME']
+app.config['MAIL_PASSWORD'] = config['MAIL']['MAIL_PASSWORD']
+app.config['MAIL_USE_SSL'] = config['MAIL']['MAIL_USE_SSL']
+
+app.config['JWT_SECRET_KEY'] = config['JWT']['JWT_SECRET_KEY']
+app.config['JWT_COOKIE_SECURE'] = config['JWT']['JWT_COOKIE_SECURE']
+app.config['JWT_TOKEN_LOCATION'] = config['JWT']['JWT_TOKEN_LOCATION']
+app.config['JWT_COOKIE_CSRF_PROTECT'] = config['JWT']['JWT_COOKIE_CSRF_PROTECT']
+
+jwt = JWTManager(app)
+mail = Mail(app)
+
+api.add_namespace(auth, '/auth')
+api.add_namespace(oauth, '/oauth')
+
 if __name__ == '__main__':
-    app.run('0.0.0.0', debug=config['DEFAULT']['DEBUG'], port=config['DEFAULT']['PORT'])
+    app.run(config['DEFAULT']['HOST'], debug=config['DEFAULT']['DEBUG'], port=config['DEFAULT']['PORT'])
