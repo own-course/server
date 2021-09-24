@@ -123,7 +123,7 @@ class TokenAPI(Resource):
         super().__init__(api, args, kwargs)
 
     @jwt_required(refresh=True)
-    @auth.doc(security='Authorization')
+    @auth.doc(security='apiKey')
     def get(self):
         """resfresh token으로 access token 갱신"""
         user_id = get_jwt_identity()
