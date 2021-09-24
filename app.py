@@ -2,6 +2,7 @@ from flask import Flask
 from flask_restx import Api
 from api.auth.auth import auth
 from api.auth.oauth import oauth
+from api.place.place import place
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 import configparser
@@ -28,6 +29,7 @@ mail = Mail(app)
 
 api.add_namespace(auth, '/auth')
 api.add_namespace(oauth, '/oauth')
+api.add_namespace(place, '/place')
 
 if __name__ == '__main__':
     app.run(config['DEFAULT']['HOST'], debug=config['DEFAULT']['DEBUG'], port=config['DEFAULT']['PORT'])
