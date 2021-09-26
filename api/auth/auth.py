@@ -1,9 +1,8 @@
-from flask import make_response
 from flask_restx import Namespace, Resource, fields
 from flask_mail import Mail, Message
 from flask_jwt_extended import (
-    create_access_token, create_refresh_token, set_access_cookies,
-    set_refresh_cookies, jwt_required, get_jwt_identity
+    create_access_token, create_refresh_token,
+    jwt_required, get_jwt_identity
 )
 from database.database import Database
 import bcrypt
@@ -20,12 +19,26 @@ model_email = auth.model('model_email', {
     'password': fields.String(description='비밀번호')
 })
 
+auth_email_response = auth.model('auth_email_response', {
+    'message': fields.String
+})
+auth_email_response_with_code = auth.inherit('auth_email_response_with_code', auth_email_response, {
+    'code': fields.Integer
+})
+auth_response_with_token = auth.model('auth_response_with_token', {
+    'access_token': fields.String
+})
+auth_response_with_refresh_token = auth.inherit('auth_response_with_refresh_token', auth_response_with_token, {
+    'refresh_token': fields.String
+})
+
 config = configparser.ConfigParser()
 config.read_file(open('config/config.ini'))
 
 database = Database()
 
 @auth.route('/email')
+@auth.response(200, 'Success', auth_email_response_with_code)
 class EmailAuthAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -40,14 +53,18 @@ class EmailAuthAPI(Resource):
     @auth.expect(model_auth_email)
     def post(self):
         """이메일 인증코드 전송"""
-        msg = Message('OwnCourse 회원가입 인증 메일입니다.', sender='owncourse2021@gmail.com', recipients=[self.email])
+        msg = Message('OwnCourse 회원가입 인증 메일입니다.',
+                      sender='owncourse2021@gmail.com',
+                      recipients=[self.email])
         msg.body = f'인증코드 : {self.code}'
         mail = Mail()
         mail.send(msg)
-        return make_response(
-            {'message': 'Email is sent successfully.', 'code': f'{self.code}'}, 200)
+
+        return {'message': 'Email is sent successfully.',
+                'code': self.code}, 200
 
 @auth.route('/signup')
+@auth.response(200, 'Success')
 class SignUpAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -74,9 +91,11 @@ class SignUpAPI(Resource):
         """
         database.execute(sql, value)
         database.commit()
-        return make_response("Success", 200)
+        return 200
 
 @auth.route('/signin')
+@auth.response(200, 'Success', auth_response_with_refresh_token)
+@auth.response(400, 'Bad Request', auth_email_response)
 class SignInAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -103,32 +122,32 @@ class SignInAPI(Resource):
 
         if row is not None:
             if bcrypt.checkpw(self.password.encode('utf-8'), row['password'].encode('utf-8')):
-                return get_token(row['id'])
+                return get_token(row['id']), 200
             else:
-                return make_response({'message': 'Password does not match.'}, 400)
+                return {'message': 'Password does not match.'}, 400
         else:
-            return make_response("User does not exist.", 400)
+            return {'message': 'User does not exist.'}, 400
 
 @auth.route('/token/refresh')
+@auth.response(200, 'Success', auth_response_with_token)
+@auth.response(401, 'Unauthorized')
 class TokenAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
     @jwt_required(refresh=True)
+    @auth.doc(security='apiKey')
     def get(self):
         """resfresh token으로 access token 갱신"""
         user_id = get_jwt_identity()
-        resp = make_response({'result': True}, 200)
         access_token = create_access_token(identity=user_id)
-        set_access_cookies(resp, access_token)
+        resp = {'access_token': access_token}
 
-        return resp
+        return resp, 200
 
 def get_token(user):
     access_token = create_access_token(identity=user)
     refresh_token = create_refresh_token(identity=user)
-    resp = make_response({'login': True}, 200)
-    set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
+    resp = {'access_token': access_token, 'refresh_token': refresh_token}
 
     return resp
