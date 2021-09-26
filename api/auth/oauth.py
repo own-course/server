@@ -1,5 +1,5 @@
 from flask_restx import Namespace, Resource, fields
-from api.auth.auth import get_token
+from api.auth.auth import get_token, auth_response_with_refresh_token, auth_email_response
 from database.database import Database
 import requests
 import configparser
@@ -26,8 +26,8 @@ port = config['DEFAULT']['PORT']
 database = Database()
 
 @oauth.route('/kakao')
-@oauth.doc(responses={200: 'Success'})
-@oauth.doc(responses={400: 'Bad Request'})
+@oauth.response(200, 'Success', auth_response_with_refresh_token)
+@oauth.response(400, 'Bad Request', auth_email_response)
 class KakaoLoginAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -55,7 +55,7 @@ class KakaoLoginAPI(Resource):
         ).json()
         error = token_json.get("error", None)
         if error is not None:
-            return {'result': False, "message": "INVALID_CLIENT"}, 400
+            return {"message": "INVALID_CLIENT"}, 400
 
         access_token = token_json['access_token']
         user_info = requests.post(
@@ -92,8 +92,8 @@ class KakaoLoginAPI(Resource):
         return get_token(user), 200
 
 @oauth.route('/naver')
-@oauth.doc(responses={200: 'Success'})
-@oauth.doc(responses={400: 'Bad Request'})
+@oauth.response(200, 'Success', auth_response_with_refresh_token)
+@oauth.response(400, 'Bad Request', auth_email_response)
 class NaverLoginAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -112,7 +112,7 @@ class NaverLoginAPI(Resource):
         token_json = get_naver_token(self.state, self.code)
         error = token_json.get("error", None)
         if error is not None:
-            return {'result': False, "message": "INVALID_CLIENT"}, 400
+            return {"message": "INVALID_CLIENT"}, 400
 
         access_token = token_json['access_token']
         token_type = token_json['token_type']
@@ -143,8 +143,8 @@ class NaverLoginAPI(Resource):
         return get_token(user), 200
 
 @oauth.route('/google')
-@oauth.doc(responses={200: 'Success'})
-@oauth.doc(responses={400: 'Bad Request'})
+@oauth.response(200, 'Success', auth_response_with_refresh_token)
+@oauth.response(400, 'Bad Request', auth_email_response)
 class GoogleLoginAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -173,7 +173,7 @@ class GoogleLoginAPI(Resource):
         ).json()
         error = token_json.get("error", None)
         if error is not None:
-            return {'result': False, "message": "INVALID_CLIENT"}, 400
+            return {"message": "INVALID_CLIENT"}, 400
         access_token = token_json['access_token']
         user_info = requests.get(
             url="https://www.googleapis.com/userinfo/v2/me",
