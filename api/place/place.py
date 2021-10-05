@@ -1,6 +1,6 @@
 from flask import make_response
 from flask_restx import Namespace, Resource, fields
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 from database.database import Database
 
 place = Namespace('Place', description='장소 API')
@@ -17,12 +17,12 @@ class RecommendPlaceAPI(Resource):
     @place.doc(security='apiKey')
     @jwt_required()
     def get(self):
-        """홈 탭의 추천 장소(X)"""
+        """홈 탭의 추천 장소 (추가예정)"""
         pass
 
 @place.doc(params={
-    'category': 'taste, location or popular',
-    'category_code': 'all, attraction, food, cafe, unique, activity or culture',
+    'category': '거리순: location (취향순, 인기순 추가예정)',
+    'category_code': '전체: ALL, 관광명소: AT, 음식점: FD, 카페: CE, 이색체험: UE, 액티비티: AC, 문화생활: CT',
     'longitude':
         {'description': 'longitude', 'in': 'query', 'type': 'float'},
     'latitude':
@@ -58,36 +58,61 @@ class PlacesByCategoryAPI(Resource):
             pass
 
         elif category == "location":
-            sql = """
-                    SELECT Place.id, Place.name, Place.category_name, Place.hashtags,
-                    AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num,
+            if category_code == 'ALL':
+                sql = """
+                        SELECT id, name, categories, hashtags,
+                        (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                        * cos(radians(Place.longitude) - radians(%(longitude)s))
+                        + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
+                        FROM Place
+                        WHERE enabled = 1
+                        ORDER BY distance
+                        LIMIT 0,10
+                """
+            else:
+                sql = """
+                    SELECT id, name, categories, hashtags,
                     (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                     * cos(radians(Place.longitude) - radians(%(longitude)s))
                     + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
-                    FROM Place JOIN Review
-                    WHERE Place.category_code = %(category_code)s AND Place.enabled = 1
-                    AND Review.place_id = Place.id
+                    FROM Place
+                    WHERE enabled = 1
+                    AND categories REGEXP %(category_code)s
                     ORDER BY distance
                     LIMIT 0,10
             """
             rows = database.execute_all(sql, value)
+            for row in rows:
+                sql = """
+                        SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
+                        FROM Review
+                        WHERE place_id = %(place_id)s      
+                """
+                review = database.execute_one(sql, {'place_id': row['id']})
+                if review is None:
+                    row['review_rating'] = 0
+                    row['review_num'] = 0
+                row['review_rating'] = review['rating']
+                row['review_num'] = review['review_num']
+
             return rows, 200
 
         elif category == "popular":
-
             sql = """
-                    SELECT Place.id, Place.name, Place.category_name, Place.hashtags,
+                    SELECT Place.id, Place.name, Place.categories, Place.hashtags,
                     AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num,
                     (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude)) 
                     * cos(radians(Place.longitude) - radians(%(longitude)s)) 
                     + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance 
                     FROM Place JOIN Review
-                    WHERE Place.category_code = %(category_code)s AND Place.enabled = 1
+                    WHERE Place.categories = %(category_code)s AND Place.enabled = 1
                     AND Review.place_id = Place.id
+                    GROUP BY id
                     ORDER BY distance <= 3, review_num, rating
                     LIMIT 0,10
             """
             rows = database.execute_all(sql, value)
+
             return rows, 200
 
         else:
@@ -120,7 +145,7 @@ class PlaceInfoAPI(Resource):
             """
             review_row = database.execute_one(sql, {'place_id': place_id})
             if review_row is None:
-                row['rating'] = 0
+                row['review_rating'] = 0
                 row['review_num'] = 0
 
             else:
@@ -130,6 +155,6 @@ class PlaceInfoAPI(Resource):
                     WHERE place_id = %(place_id)s
                 """
                 review_row = database.execute_one(sql, {'place_id': place_id})
-                row['rating'] = review_row['rating']
+                row['review_rating'] = review_row['rating']
                 row['review_num'] = review_row['review_num']
         return row, 200
