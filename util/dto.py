@@ -1,5 +1,36 @@
 from flask_restx import Namespace, fields
 
+class PlaceDto:
+    api = Namespace('Place', description='장소 API')
+    place_by_category = api.model('place_by_category', {
+        'id': fields.Integer,
+        'name': fields.String,
+        'address': fields.String,
+        'categories': fields.String(example='["AT1","AT2"]'),
+        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'distance': fields.Float,
+        'review_rating': fields.Float,
+        'review_num': fields.Integer
+    })
+    place_detail = api.model('place_detail', {
+        'id': fields.Integer,
+        'name': fields.String,
+        'address': fields.String,
+        'road_address': fields.String,
+        'categories': fields.String(example='["AT1","AT2"]'),
+        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'phone': fields.String,
+        'url': fields.String,
+        'longitude': fields.Float,
+        'latitude': fields.Float,
+        'descriptions': fields.String,
+        'review_rating': fields.Float,
+        'review_num': fields.Integer
+    })
+    place_error = api.model('place_error', {
+        'message': fields.String
+    })
+
 class ReviewDto:
     api = Namespace('Review', description='장소 리뷰')
     review = api.model('review', {

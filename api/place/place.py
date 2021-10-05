@@ -1,13 +1,13 @@
 from flask import make_response
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Resource
+from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required
 from database.database import Database
 
-place = Namespace('Place', description='장소 API')
-
-place_response_message = place.model('place_response_message', {
-    'message': fields.String
-})
+place = PlaceDto.api
+_place_by_category = PlaceDto.place_by_category
+_place_detail = PlaceDto.place_detail
+_place_error = PlaceDto.place_error
 
 @place.route('/recommend')
 class RecommendPlaceAPI(Resource):
@@ -29,8 +29,8 @@ class RecommendPlaceAPI(Resource):
         {'description': 'latitude', 'in': 'query', 'type': 'float'}
 })
 @place.route('/<string:category>/<string:category_code>')
-@place.response(200, 'Success')
-@place.response(400, 'Bad Request', place_response_message)
+@place.response(200, 'Success', _place_by_category)
+@place.response(400, 'Bad Request', _place_error)
 class PlacesByCategoryAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -60,7 +60,7 @@ class PlacesByCategoryAPI(Resource):
         elif category == "location":
             if category_code == 'ALL':
                 sql = """
-                        SELECT id, name, categories, hashtags,
+                        SELECT id, name, address, categories, hashtags,
                         (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                         * cos(radians(Place.longitude) - radians(%(longitude)s))
                         + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
@@ -71,7 +71,7 @@ class PlacesByCategoryAPI(Resource):
                 """
             else:
                 sql = """
-                    SELECT id, name, categories, hashtags,
+                    SELECT id, name, address, categories, hashtags,
                     (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                     * cos(radians(Place.longitude) - radians(%(longitude)s))
                     + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
@@ -119,8 +119,8 @@ class PlacesByCategoryAPI(Resource):
             return make_response({'message': 'Invalid request.'}, 400)
 
 @place.route('/<int:place_id>')
-@place.response(200, 'Success')
-@place.response(400, 'Bad Request', place_response_message)
+@place.response(200, 'Success', _place_detail)
+@place.response(400, 'Bad Request', _place_error)
 class PlaceInfoAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -131,7 +131,9 @@ class PlaceInfoAPI(Resource):
         """장소 상세정보"""
         database = Database()
         sql = """
-            SELECT * FROM Place
+            SELECT id, name, address, road_address, categories, hashtags,
+            phone, url, longitude, latitude, descriptions
+            FROM Place
             WHERE id = %(place_id)s AND enabled = 1
         """
         row = database.execute_one(sql, {'place_id': place_id})
