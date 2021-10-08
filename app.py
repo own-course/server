@@ -2,6 +2,7 @@ from flask import Flask
 from flask_restx import Api
 from api.auth.auth import auth
 from api.auth.oauth import oauth
+from api.user.user import user
 from api.place.place import place
 from api.review.review import review
 from flask_mail import Mail
@@ -34,6 +35,7 @@ mail = Mail(app)
 
 api.add_namespace(auth, '/auth')
 api.add_namespace(oauth, '/oauth')
+api.add_namespace(user, '/user')
 api.add_namespace(place, '/place')
 api.add_namespace(review, '/review')
 

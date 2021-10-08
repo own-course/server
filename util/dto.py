@@ -1,5 +1,14 @@
 from flask_restx import Namespace, fields
 
+class UserDto:
+    api = Namespace('User', description='사용자 API')
+    profile = api.model('profile', {
+        'nickname': fields.String
+    })
+    user_profile_error = api.model('use_profile_error', {
+        'message': fields.String
+    })
+
 class PlaceDto:
     api = Namespace('Place', description='장소 API')
     place_by_category = api.model('place_by_category', {
