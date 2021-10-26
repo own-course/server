@@ -173,4 +173,51 @@ class ReviewDetailAPI(Resource):
             row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
             return row, 200
 
+@review.route('/<int:review_id>/like')
+@review.response(200, 'Success')
+@review.response(400, 'Bad Request', _review_error)
+class ReviewLikeAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
 
+        self.user_id = get_jwt_identity()
+
+    @review.doc(security='apiKey')
+    def post(self, review_id):
+        """리뷰 좋아요 누르기 또는 취소하기"""
+        database = Database()
+        sql = f"SELECT id FROM Review WHERE id = {review_id}"
+        row = database.execute_one(sql)
+        if row is None:
+            return {'message': f'Review id \'{review_id}\' does not exist.'}, 400
+        else:
+            value = {
+                'review_id': review_id,
+                'user_id': self.user_id
+            }
+            sql = """
+                SELECT id, enabled FROM Review_User
+                WHERE review_id = %(review_id)s AND user_id = %(user_id)s
+            """
+            row = database.execute_one(sql, value)
+            if row is None:
+                sql = """
+                    INSERT INTO Review_User (review_id, user_id) 
+                    VALUES (%(review_id)s, %(user_id)s)
+                """
+            else:
+                if row['enabled'] == 1:
+                    sql = """
+                        UPDATE Review_User SET enabled = 0 
+                        WHERE review_id = %(review_id)s AND user_id = %(user_id)s
+                    """
+                elif row['enabled'] == 0:
+                    sql = """
+                        UPDATE Review_User SET enabled = 1
+                        WHERE review_id = %(review_id)s AND user_id = %(user_id)s
+                    """
+            database.execute(sql, value)
+            database.commit()
+
+            return 200

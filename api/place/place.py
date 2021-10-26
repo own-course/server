@@ -1,7 +1,7 @@
 from flask import make_response
 from flask_restx import Resource
 from util.dto import PlaceDto
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 
 place = PlaceDto.api
@@ -160,3 +160,52 @@ class PlaceInfoAPI(Resource):
                 row['review_rating'] = review_row['rating']
                 row['review_num'] = review_row['review_num']
         return row, 200
+
+@place.route('/<int:place_id>/like')
+@place.response(200, 'Success')
+@place.response(400, 'Bad Request', _place_error)
+class PlaceLikeAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        self.user_id = get_jwt_identity()
+
+    @place.doc(security='apiKey')
+    def post(self, place_id):
+        """장소 좋아요 누르기 또는 취소하기"""
+        database = Database()
+        sql = f"SELECT id FROM Place WHERE id = {place_id}"
+        row = database.execute_one(sql)
+        if row is None:
+            return {'message': f'Place id \'{place_id}\' does not exist.'}, 400
+        else:
+            value = {
+                'place_id': place_id,
+                'user_id': self.user_id
+            }
+            sql = """
+                SELECT id, enabled FROM Place_User
+                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+            """
+            row = database.execute_one(sql, value)
+            if row is None:
+                sql = """
+                    INSERT INTO Place_User (place_id, user_id) 
+                    VALUES (%(place_id)s, %(user_id)s)
+                """
+            else:
+                if row['enabled'] == 1:
+                    sql = """
+                        UPDATE Place_User SET enabled = 0 
+                        WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+                    """
+                elif row['enabled'] == 0:
+                    sql = """
+                        UPDATE Place_User SET enabled = 1
+                        WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+                    """
+            database.execute(sql, value)
+            database.commit()
+
+            return 200
