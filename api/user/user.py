@@ -7,8 +7,8 @@ from util.upload import upload_file
 
 user = UserDto.api
 _profile = UserDto.profile
-_user_profile_error = UserDto.user_profile_error
-
+_user_error = UserDto.user_error
+_liked_places = UserDto.liked_places
 @user.route('/profile')
 class SetProfileAPI(Resource):
     @jwt_required()
@@ -25,7 +25,7 @@ class SetProfileAPI(Resource):
     @user.expect(_profile)
     @user.doc(security='apiKey')
     @user.response(200, 'Success')
-    @user.response(400, 'Bad Request', _user_profile_error)
+    @user.response(400, 'Bad Request', _user_error)
     def post(self):
         """회원가입 후 프로필(닉네임) 설정"""
         if self.nickname is None:
@@ -57,7 +57,7 @@ class SetProfileImgAPI(Resource):
 
     @user.doc(security='apiKey')
     @user.response(200, 'Success')
-    @user.response(400, 'Bad Request', _user_profile_error)
+    @user.response(400, 'Bad Request', _user_error)
     def post(self):
         """프로필 이미지 설정"""
         database = Database()
@@ -90,3 +90,55 @@ class SetProfileImgAPI(Resource):
 
         return 200
 
+@user.route('/place')
+@user.response(200, 'Success', _liked_places)
+@user.response(400, 'Bad Request', _user_error)
+class GetLikedPlaceAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        parser = api.parser()
+        parser.add_argument('page', type=int)
+        args = parser.parse_args()
+
+        self.page = args['page']
+        self.user_id = get_jwt_identity()
+
+    @user.doc(security='apiKey')
+    @user.doc(params={
+        'page':
+            {'description': 'pagination (start=1)', 'in': 'query', 'type': 'int'}}
+    )
+    def get(self):
+        """좋아요 누른 장소 불러오기"""
+        database = Database()
+        page = self.page - 1
+        limit = 10
+        value = {
+            'user_id': self.user_id,
+            'start': page * limit,
+            'limit': limit
+        }
+        sql = """
+            SELECT Place.id, Place.name, Place.address, Place.categories, Place.hashtags
+            FROM Place_User JOIN Place
+            WHERE Place_User.place_id = Place.id AND Place_User.user_id = %(user_id)s AND Place_User.enabled = 1
+            ORDER BY Place_User.updated_at desc
+            LIMIT %(start)s, %(limit)s 
+        """
+        rows = database.execute_all(sql, value)
+        for row in rows:
+            sql = """
+                SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
+                FROM Review
+                WHERE place_id = %(place_id)s      
+            """
+            review = database.execute_one(sql, {'place_id': row['id']})
+            if review is None:
+                row['review_rating'] = 0
+                row['review_num'] = 0
+            row['review_rating'] = review['rating']
+            row['review_num'] = review['review_num']
+
+        return rows, 200

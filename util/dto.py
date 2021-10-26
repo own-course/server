@@ -5,7 +5,16 @@ class UserDto:
     profile = api.model('profile', {
         'nickname': fields.String
     })
-    user_profile_error = api.model('use_profile_error', {
+    liked_places = api.model('liked_places', {
+        'id': fields.Integer,
+        'name': fields.String,
+        'address': fields.String,
+        'categories': fields.String(example='["AT1","AT2"]'),
+        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'review_rating': fields.Float,
+        'review_num': fields.Integer
+    })
+    user_error = api.model('use_error', {
         'message': fields.String
     })
 
