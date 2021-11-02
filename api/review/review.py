@@ -196,6 +196,9 @@ class ReviewLikeAPI(Resource):
                 'review_id': review_id,
                 'user_id': self.user_id
             }
+            value2 = {
+                'review_id': review_id
+            }
             sql = """
                 SELECT id, enabled FROM Review_User
                 WHERE review_id = %(review_id)s AND user_id = %(user_id)s
@@ -206,18 +209,32 @@ class ReviewLikeAPI(Resource):
                     INSERT INTO Review_User (review_id, user_id) 
                     VALUES (%(review_id)s, %(user_id)s)
                 """
+                sql2 = """
+                    UPDATE Review SET likes = likes + 1 
+                    WHERE id = %(review_id)s
+                """
             else:
                 if row['enabled'] == 1:
                     sql = """
                         UPDATE Review_User SET enabled = 0 
                         WHERE review_id = %(review_id)s AND user_id = %(user_id)s
                     """
+                    sql2 = """
+                        UPDATE Review SET likes = likes - 1 
+                        WHERE id = %(review_id)s
+                    """
                 elif row['enabled'] == 0:
                     sql = """
                         UPDATE Review_User SET enabled = 1
                         WHERE review_id = %(review_id)s AND user_id = %(user_id)s
                     """
+                    sql2 = """
+                        UPDATE Review SET likes = likes + 1 
+                        WHERE id = %(review_id)s
+                    """
             database.execute(sql, value)
+            database.commit()
+            database.execute(sql2, value2)
             database.commit()
 
             return 200
