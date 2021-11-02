@@ -65,6 +65,7 @@ class ReviewDto:
         'rating': fields.Float,
         'content': fields.String,
         'review_img': fields.String,
+        'likes': fields.Integer,
         'source': fields.String,
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
         'user_name': fields.String,
