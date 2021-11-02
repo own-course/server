@@ -5,6 +5,7 @@ from api.auth.oauth import oauth
 from api.user.user import user
 from api.place.place import place
 from api.review.review import review
+from api.course.course import course
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 import configparser
@@ -38,6 +39,7 @@ api.add_namespace(oauth, '/oauth')
 api.add_namespace(user, '/user')
 api.add_namespace(place, '/place')
 api.add_namespace(review, '/review')
+api.add_namespace(course, '/course')
 
 if __name__ == '__main__':
     app.run(config['DEFAULT']['HOST'], debug=config['DEFAULT']['DEBUG'], port=config['DEFAULT']['PORT'])

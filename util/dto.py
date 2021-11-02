@@ -77,3 +77,9 @@ class ReviewDto:
         'review_num': fields.Integer,
         'result': fields.List(fields.Nested(review_detail))
     })
+
+class CourseDto:
+    api = Namespace('Course', description='코스')
+    course_error = api.model('course_error', {
+        'message': fields.String
+    })
