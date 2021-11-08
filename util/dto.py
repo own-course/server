@@ -5,6 +5,13 @@ class UserDto:
     profile = api.model('profile', {
         'nickname': fields.String
     })
+    profile_info = api.model('profile_info', {
+        'user_id': fields.Integer,
+        'nickname': fields.String,
+        'profile_img': fields.String,
+        'platform_type': fields.String(example='Email'),
+        'email': fields.String
+    })
     liked_places = api.model('liked_places', {
         'id': fields.Integer,
         'name': fields.String,
