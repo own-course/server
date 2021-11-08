@@ -73,6 +73,7 @@ class ReviewDto:
     })
     review_img_detail = api.model('review_img_detail', {
         'review_id': fields.Integer,
+        'rating': fields.Float,
         'review_img': fields.String
     })
     review_error = api.model('review_error', {

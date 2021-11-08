@@ -157,6 +157,7 @@ class GetPlaceReviewImgAPI(Resource):
                     review_img_num += 1
                     r = {
                         'review_id': row['id'],
+                        'rating': row['rating'],
                         'review_img': img
                     }
                     result.append(r)
