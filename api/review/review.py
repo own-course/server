@@ -12,6 +12,7 @@ _review_id = ReviewDto.review_id
 _review_detail = ReviewDto.review_detail
 _review_error = ReviewDto.review_error
 _review_by_place = ReviewDto.review_by_place
+_review_img = ReviewDto.review_img
 
 @review.route('/<int:place_id>')
 @review.doc(params={'place_id': 'place ID'})
@@ -69,7 +70,7 @@ class PlaceReviewAPI(Resource):
     @review.doc(security='apiKey')
     @review.doc(params={
         'page':
-            {'description': 'pagination', 'in': 'query', 'type': 'int'}}
+            {'description': 'pagination (start = 1)', 'in': 'query', 'type': 'int'}}
     )
     @review.response(200, 'Success', _review_by_place)
     def get(self, place_id):
@@ -108,10 +109,63 @@ class PlaceReviewAPI(Resource):
 
             return {'review_num': row['review_num'], 'result': rows}, 200
 
+@review.route('/<int:place_id>/img')
+@review.doc(params={'place_id': 'place ID'})
+@review.response(400, 'Bad Request', _review_error)
+class GetPlaceReviewImgAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        parser = api.parser()
+        parser.add_argument('page', type=int)
+        args = parser.parse_args()
+
+        self.page = args['page']
+        self.user_id = get_jwt_identity()
+
+    @review.doc(security='apiKey')
+    @review.response(200, 'Success', _review_img)
+    def get(self, place_id):
+        """특정 장소의 리뷰 사진 가져오기"""
+        database = Database()
+        sql = """
+                SELECT id FROM Place
+                WHERE id = %(place_id)s
+        """
+        row = database.execute_one(sql, {'place_id': place_id})
+        if row is None:
+            return {'message': f'Place ID \'{place_id}\' does not exist.'}, 400
+        else:
+            review_img_num = 0
+            result = []
+            i = 0
+            value = {
+                'place_id': place_id,
+            }
+            sql = """
+                SELECT id, rating, review_img FROM Review
+                WHERE place_id = %(place_id)s
+            """
+            rows = database.execute_all(sql, value)
+            for row in rows:
+                imgs = row['review_img'][1:-1]
+                imgs = imgs.split('","')
+                for img in imgs:
+                    review_img_num += 1
+                    r = {
+                        'review_id': row['id'],
+                        'review_img': img
+                    }
+                    result.append(r)
+                    i += 1
+
+        return {'review_img_num': review_img_num, 'result': result}, 200
+
 @review.route('/<int:review_id>/img')
 @review.doc(params={'review_id': 'review ID'})
 @review.response(400, 'Bad Request', _review_error)
-class PlaceReviewImgAPI(Resource):
+class SetPlaceReviewImgAPI(Resource):
     @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)

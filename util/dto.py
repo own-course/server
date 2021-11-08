@@ -71,10 +71,18 @@ class ReviewDto:
         'user_name': fields.String,
         'profile_img': fields.String
     })
+    review_img_detail = api.model('review_img_detail', {
+        'review_id': fields.Integer,
+        'review_img': fields.String
+    })
     review_error = api.model('review_error', {
         'message': fields.String
     })
     review_by_place = api.model('review_by_place', {
         'review_num': fields.Integer,
         'result': fields.List(fields.Nested(review_detail))
+    })
+    review_img = api.model('review_img', {
+        'review_img_num': fields.Integer,
+        'result': fields.List(fields.Nested(review_img_detail))
     })
