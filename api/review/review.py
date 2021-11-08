@@ -137,9 +137,10 @@ class GetPlaceReviewImgAPI(Resource):
         if row is None:
             return {'message': f'Place ID \'{place_id}\' does not exist.'}, 400
         else:
+            review_num = 0
             review_img_num = 0
             result = []
-            i = 0
+
             value = {
                 'place_id': place_id,
             }
@@ -149,6 +150,7 @@ class GetPlaceReviewImgAPI(Resource):
             """
             rows = database.execute_all(sql, value)
             for row in rows:
+                review_num += 1
                 imgs = row['review_img'][1:-1]
                 imgs = imgs.split('","')
                 for img in imgs:
@@ -158,9 +160,8 @@ class GetPlaceReviewImgAPI(Resource):
                         'review_img': img
                     }
                     result.append(r)
-                    i += 1
 
-        return {'review_img_num': review_img_num, 'result': result}, 200
+        return {'review_num': review_num, 'review_img_num': review_img_num, 'result': result}, 200
 
 @review.route('/<int:review_id>/img')
 @review.doc(params={'review_id': 'review ID'})

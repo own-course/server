@@ -83,6 +83,7 @@ class ReviewDto:
         'result': fields.List(fields.Nested(review_detail))
     })
     review_img = api.model('review_img', {
+        'review_num': fields.Integer,
         'review_img_num': fields.Integer,
         'result': fields.List(fields.Nested(review_img_detail))
     })
