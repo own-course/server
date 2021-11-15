@@ -72,8 +72,8 @@ class PlacesByCategoryAPI(Resource):
             'longitude': self.longitude,
             'latitude': self.latitude
         }
-        print(category)
-        if self.sort == "taste":
+
+        if self.sort == "taste(X)":
             pass
 
         else:
@@ -113,7 +113,7 @@ class PlacesByCategoryAPI(Resource):
                     row['review_num'] = 0
                 row['review_rating'] = review['rating']
                 row['review_num'] = review['review_num']
-            if self.sort == "location":
+            if self.sort == "location" or self.sort == "taste":
                 return rows, 200
 
             elif self.sort == "popular":
