@@ -39,7 +39,9 @@ class RecommendPlaceAPI(Resource):
     'longitude':
         {'description': 'longitude', 'in': 'query', 'type': 'float'},
     'latitude':
-        {'description': 'latitude', 'in': 'query', 'type': 'float'}
+        {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'search':
+        {'description': 'search by place name or place address or place hastags', 'in': 'query', 'type': 'string'}
 })
 @place.route('')
 @place.response(200, 'Success', _place_by_category)
@@ -53,12 +55,14 @@ class PlacesByCategoryAPI(Resource):
         parser.add_argument('category', type=str, required=True)
         parser.add_argument('longitude', type=float, required=True)
         parser.add_argument('latitude', type=float, required=True)
+        parser.add_argument('search', type=str, required=False)
         args = parser.parse_args()
 
         self.sort = args['sort']
         self.category = args['category']
         self.longitude = args['longitude']
         self.latitude = args['latitude']
+        self.search = args['search']
 
     @place.doc(security='apiKey')
     @jwt_required()
@@ -70,7 +74,8 @@ class PlacesByCategoryAPI(Resource):
             'sort': self.sort,
             'category': category,
             'longitude': self.longitude,
-            'latitude': self.latitude
+            'latitude': self.latitude,
+            'search': self.search
         }
 
         if self.sort == "taste(X)":
@@ -78,28 +83,55 @@ class PlacesByCategoryAPI(Resource):
 
         else:
             if category == 'ALL':
-                sql = """
-                        SELECT id, name, address, categories, hashtags,
-                        (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
-                        * cos(radians(Place.longitude) - radians(%(longitude)s))
-                        + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
-                        FROM Place
-                        WHERE enabled = 1
-                        ORDER BY distance
-                        LIMIT 0,30
-                """
+                if self.search is None:
+                    sql = """
+                            SELECT id, name, address, categories, hashtags,
+                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            * cos(radians(Place.longitude) - radians(%(longitude)s))
+                            + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
+                            FROM Place
+                            WHERE enabled = 1
+                            ORDER BY distance
+                            LIMIT 0,30
+                    """
+                else:
+                    sql = """
+                            SELECT id, name, address, categories, hashtags,
+                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            * cos(radians(Place.longitude) - radians(%(longitude)s))
+                            + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
+                            FROM Place
+                            WHERE enabled = 1 
+                            AND name REGEXP %(search)s OR address REGEXP %(search)s OR hashtags REGEXP %(search)s
+                            ORDER BY distance
+                            LIMIT 0,30
+                    """
             else:
-                sql = """
-                    SELECT id, name, address, categories, hashtags,
-                    (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
-                    * cos(radians(Place.longitude) - radians(%(longitude)s))
-                    + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
-                    FROM Place
-                    WHERE enabled = 1
-                    AND categories REGEXP %(category)s
-                    ORDER BY distance
-                    LIMIT 0,30
-            """
+                if self.search is None:
+                    sql = """
+                            SELECT id, name, address, categories, hashtags,
+                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            * cos(radians(Place.longitude) - radians(%(longitude)s))
+                            + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
+                            FROM Place
+                            WHERE enabled = 1
+                            AND categories REGEXP %(category)s
+                            ORDER BY distance
+                            LIMIT 0,30
+                    """
+                else:
+                    sql = """
+                            SELECT id, name, address, categories, hashtags,
+                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            * cos(radians(Place.longitude) - radians(%(longitude)s))
+                            + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
+                            FROM Place
+                            WHERE enabled = 1
+                            AND categories REGEXP %(category)s 
+                            AND name REGEXP %(search)s OR address REGEXP %(search)s OR hashtags REGEXP %(search)s
+                            ORDER BY distance
+                            LIMIT 0,30
+                    """
             rows = database.execute_all(sql, value)
             for row in rows:
                 sql = """
