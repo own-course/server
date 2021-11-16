@@ -95,6 +95,13 @@ class CourseDto:
         'address': fields.String,
         'course_info': fields.List(fields.Nested(course_info), action='append', description='장소 개수 만큼 입력')
     })
+    course_list = api.model('course_list', {
+        'id': fields.Integer,
+        'course_name': fields.String,
+        'cost': fields.Integer,
+        'hours': fields.Float,
+        'address': fields.String
+    })
     course_error = api.model('course_error', {
         'message': fields.String
     })

@@ -7,6 +7,7 @@ from database.database import Database
 course = CourseDto.api
 _course = CourseDto.course
 _course_error = CourseDto.course_error
+_course_list = CourseDto.course_list
 
 @course.doc(params={
     'category':
@@ -62,7 +63,6 @@ class RecommendCourseAPI(Resource):
         pass
 
 @course.route('')
-@course.response(200, 'Success')
 class SaveCourseAPI(Resource):
     @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
@@ -85,6 +85,7 @@ class SaveCourseAPI(Resource):
         self.course_info = args['course_info']
         self.user_id = get_jwt_identity()
 
+    @course.response(200, 'Success')
     @course.expect(_course)
     @course.doc(security='apiKey')
     def post(self):
@@ -126,6 +127,18 @@ class SaveCourseAPI(Resource):
 
         return 200
 
+    @course.response(200, 'Success', _course_list)
+    @course.doc(security='apiKey')
     def get(self):
-        """저장한 내 코스 불러오기"""
-        pass
+        """저장한 내 코스 리스트 불러오기"""
+        database = Database()
+        value = {
+            'user_id': self.user_id
+        }
+        sql = """
+            SELECT id, course_name, cost, hours, address FROM Course
+            WHERE user_id = %(user_id)s
+        """
+        rows = database.execute_all(sql, value)
+
+        return rows, 200
