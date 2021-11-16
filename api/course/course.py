@@ -5,14 +5,28 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 
 course = CourseDto.api
+_course = CourseDto.course
 _course_error = CourseDto.course_error
 
 @course.doc(params={
     'category':
-        {'description': 'category(if there are multiple, use with comma) (ex)AT1,CE,FD3,FD6', 'in': 'query', 'type': 'string'},
-    'hours': {'description': 'hours in hours (ex)2', 'in': 'query', 'type': 'float'},
-    'distance': {'description': 'distance in meters (ex)1500', 'in': 'query', 'type': 'int'},
-    'cost': {'description': 'cost in won (ex)30000', 'in': 'query', 'type': 'int'},
+        {'description': '배열로 입력 ex) ["ALL"] or ["AT"] or ["AT", "FD", "CE2", "CE3", "AC5"]\n\n'
+                        '전체: "ALL",\n\n 관광명소전체: "AT", [공원: "AT1", 야경/풍경: "AT2", 식물원/수목원: "AT3",'
+                        ' 시장: "AT4", 동물원: "AT5", 지역축제: "AT6", 유적지: "AT7", 바다: "AT8", 산/계곡: "AT9"],\n\n '
+                        '음식점전체: "FD", [한식: "FD1", 중식: "FD2", 분식: "FD3", 돈까스/회/일식: "FD4", '
+                        '패스트푸드: "FD5", 아시안/양식: "FD6", 치킨/피자: "FD7", 세계음식: "FD8", 채식: "FD9"]\n\n'
+                        '카페전체: "CE", [음료전문: "CE1", 디저트전문: "CE2", 테마카페: "CE3", 보드카페: "CE4", '
+                        '애견카페: "CE5", 만화/북카페: "CE6", 룸카페: "CE7"]\n\n'
+                        '이색체험전체: "UE", [공방: "UE1", 원데이클래스: "UE2", 사진스튜디오: "UE3", 사주/타로: "UE4", '
+                        'VR: "UE5", 방탈출: "UE6", 노래방: "UE7"]\n\n'
+                        '액티비티전체: "AC", [게임/오락: "AC1", 온천/스파: "AC2", 레저스포츠: "AC3", 테마파크: "AC4", '
+                        '아쿠아리움: "AC5", 낚시: "AC6", 캠핑: "AC7"]\n\n'
+                        '문화생활전체: "CT", [영화: "CT1", 전시회: "CT2", 공연: "CT3", 스포츠 경기: "CT4", 미술관: "CT5", '
+                        '박물관: "CT6", 쇼핑: "CT7"]',
+         'in': 'query', 'type': 'string'},
+    'hours': {'description': 'hours in hours (ex) 2', 'in': 'query', 'type': 'float'},
+    'distance': {'description': 'distance in meters (ex) 1500', 'in': 'query', 'type': 'int'},
+    'cost': {'description': 'cost in won (ex) 30000', 'in': 'query', 'type': 'int'},
     'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'},
     'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'}
 })
@@ -42,32 +56,76 @@ class RecommendCourseAPI(Resource):
     @course.doc(security='apiKey')
     @jwt_required()
     def get(self):
-        """코스 추천"""
-        pass
-
-@course.route('/<int:course_id>')
-@course.response(200, 'Success')
-@course.response(400, 'Bad Request', _course_error)
-class SaveCourseAPI(Resource):
-    def __init__(self, api=None, *args, **kwargs):
-        super().__init__(api, args, kwargs)
-
-    @course.doc(security='apiKey')
-    @jwt_required()
-    def post(self, course_id):
-        """코스 저장"""
+        """코스 추천 (미완성) """
+        database = Database()
+        category = self.category[2:-2].replace('", "', "|")
         pass
 
 @course.route('')
 @course.response(200, 'Success')
-@course.response(400, 'Bad Request', _course_error)
-class GetSavedCourseAPI(Resource):
+class SaveCourseAPI(Resource):
+    @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
+        parser = api.parser()
+        parser.add_argument('course_name', type=str)
+        parser.add_argument('place_num', type=int)
+        parser.add_argument('cost', type=int)
+        parser.add_argument('hours', type=float)
+        parser.add_argument('address', type=str)
+        parser.add_argument('course_info', type=dict, action='append')
+        args = parser.parse_args()
+
+        self.course_name = args['course_name']
+        self.place_num = args['place_num']
+        self.cost = args['cost']
+        self.hours = args['hours']
+        self.address = args['address']
+        self.course_info = args['course_info']
+        self.user_id = get_jwt_identity()
+
+    @course.expect(_course)
     @course.doc(security='apiKey')
-    @jwt_required()
+    def post(self):
+        """코스 저장"""
+        database = Database()
+        value = {
+            'user_id': self.user_id,
+            'course_name': self.course_name,
+            'place_num': self.place_num,
+            'cost': self.cost,
+            'hours': self.hours,
+            'address': self.address,
+        }
+        sql = """
+            INSERT INTO Course (user_id, course_name, place_num, cost, hours, address)
+            VALUES (%(user_id)s, %(course_name)s, %(place_num)s, %(cost)s, %(hours)s, %(address)s)
+        """
+        database.execute(sql, value)
+        database.commit()
+
+        sql = """
+            SELECT LAST_INSERT_ID() as id;
+        """
+        course_id = database.execute_one(sql)
+        for course in self.course_info:
+            value = {
+                'course_id': course_id['id'],
+                'place_id': course['place_id'],
+                'place_order': course['place_order'],
+                'avg_cost': course['avg_cost'],
+                'popular_menu': course['popular_menu']
+            }
+            sql = """
+                INSERT INTO Course_Place (course_id, place_id, place_order, avg_cost, popular_menu)
+                VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(avg_cost)s, %(popular_menu)s)
+            """
+            database.execute(sql, value)
+            database.commit()
+
+        return 200
+
     def get(self):
         """저장한 내 코스 불러오기"""
         pass
-
