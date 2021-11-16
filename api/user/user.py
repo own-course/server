@@ -9,8 +9,10 @@ user = UserDto.api
 _profile = UserDto.profile
 _user_error = UserDto.user_error
 _liked_places = UserDto.liked_places
+_profile_info = UserDto.profile_info
+
 @user.route('/profile')
-class SetProfileAPI(Resource):
+class ProfileAPI(Resource):
     @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -46,6 +48,23 @@ class SetProfileAPI(Resource):
             database.commit()
 
         return 200
+
+    @user.doc(security='apiKey')
+    @user.response(200, 'Success', _profile_info)
+    @user.response(400, 'Bad Request', _user_error)
+    def get(self):
+        """프로필 정보"""
+        database = Database()
+
+        sql = """
+            SELECT Profile.user_id, Profile.nickname, Profile.profile_img,
+            User.platform_type, User.email
+            FROM Profile JOIN User
+            WHERE Profile.user_id = %(user_id)s AND Profile.user_id = User.id
+        """
+        row = database.execute_one(sql, {'user_id': self.user_id})
+
+        return row, 200
 
 @user.route('/profile/img')
 class SetProfileImgAPI(Resource):
