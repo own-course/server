@@ -95,3 +95,30 @@ class ReviewDto:
         'review_img_num': fields.Integer,
         'result': fields.List(fields.Nested(review_img_detail))
     })
+    
+class CourseDto:
+    api = Namespace('Course', description='코스')
+    course_info = api.model('course_info', {
+        'place_id': fields.Integer,
+        'place_order': fields.Integer,
+        'avg_cost': fields.Integer,
+        'popular_menu': fields.String
+    })
+    course = api.model('course', {
+        'course_name': fields.String,
+        'place_num': fields.Integer,
+        'cost': fields.Integer,
+        'hours': fields.Float,
+        'address': fields.String,
+        'course_info': fields.List(fields.Nested(course_info), action='append', description='장소 개수 만큼 입력')
+    })
+    course_list = api.model('course_list', {
+        'id': fields.Integer,
+        'course_name': fields.String,
+        'cost': fields.Integer,
+        'hours': fields.Float,
+        'address': fields.String
+    })
+    course_error = api.model('course_error', {
+        'message': fields.String
+    })
