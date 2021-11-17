@@ -35,8 +35,6 @@ auth_response_with_refresh_token = auth.inherit('auth_response_with_refresh_toke
 config = configparser.ConfigParser()
 config.read_file(open('config/config.ini'))
 
-database = Database()
-
 @auth.route('/email')
 @auth.response(200, 'Success', auth_email_response_with_code)
 class EmailAuthAPI(Resource):
@@ -64,7 +62,7 @@ class EmailAuthAPI(Resource):
                 'code': self.code}, 200
 
 @auth.route('/signup')
-@auth.response(200, 'Success')
+@auth.response(200, 'Success', auth_response_with_refresh_token)
 class SignUpAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -80,6 +78,7 @@ class SignUpAPI(Resource):
     @auth.expect(model_email)
     def post(self):
         """이메일 회원가입"""
+        database = Database()
         value = {
             'email': self.email,
             'password': self.password.decode('utf-8'),
@@ -91,7 +90,14 @@ class SignUpAPI(Resource):
         """
         database.execute(sql, value)
         database.commit()
-        return 200
+
+        sql = """
+            SELECT LAST_INSERT_ID() as id;
+        """
+        id = database.execute_one(sql)
+        database.close()
+
+        return get_token(id['id']), 200
 
 @auth.route('/signin')
 @auth.response(200, 'Success', auth_response_with_refresh_token)
@@ -111,6 +117,7 @@ class SignInAPI(Resource):
     @auth.expect(model_email)
     def post(self):
         """이메일 로그인"""
+        database = Database()
         value = {
             'email': self.email
         }
@@ -119,6 +126,7 @@ class SignInAPI(Resource):
             WHERE email = %(email)s AND platform_type = 'Email'
             """
         row = database.execute_one(sql, value)
+        database.close()
 
         if row is not None:
             if bcrypt.checkpw(self.password.encode('utf-8'), row['password'].encode('utf-8')):

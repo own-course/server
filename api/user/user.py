@@ -46,6 +46,7 @@ class ProfileAPI(Resource):
                   f"WHERE user_id = {self.user_id}"
             database.execute(sql)
             database.commit()
+        database.close()
 
         return 200
 
@@ -63,6 +64,7 @@ class ProfileAPI(Resource):
             WHERE Profile.user_id = %(user_id)s AND Profile.user_id = User.id
         """
         row = database.execute_one(sql, {'user_id': self.user_id})
+        database.close()
 
         return row, 200
 
@@ -105,7 +107,10 @@ class SetProfileImgAPI(Resource):
                 database.execute(sql, value)
                 database.commit()
         else:
+            database.close()
+
             return {'message': result['message']}, 400
+        database.close()
 
         return 200
 
@@ -159,5 +164,6 @@ class GetLikedPlaceAPI(Resource):
                 row['review_num'] = 0
             row['review_rating'] = review['rating']
             row['review_num'] = review['review_num']
+        database.close()
 
         return rows, 200

@@ -31,3 +31,6 @@ class Database:
 
     def commit(self):
         self.db.commit()
+
+    def close(self):
+        self.cursor.close()

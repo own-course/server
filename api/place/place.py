@@ -146,6 +146,7 @@ class PlacesByCategoryAPI(Resource):
                 row['review_rating'] = review['rating']
                 row['review_num'] = review['review_num']
             if self.sort == "location" or self.sort == "taste":
+                database.close()
                 return rows, 200
 
             elif self.sort == "popular":
@@ -179,9 +180,13 @@ class PlacesByCategoryAPI(Resource):
                 # rows = database.execute_all(sql, value)
 
                 result = sorted(rows, key=lambda x: str(x['review_rating'])[:3], reverse=False)
+                database.close()
+
                 return result, 200
 
             else:
+                database.close()
+
                 return make_response({'message': 'Invalid request.'}, 400)
 
 @place.route('/<int:place_id>')
@@ -205,6 +210,8 @@ class PlaceInfoAPI(Resource):
         row = database.execute_one(sql, {'place_id': place_id})
 
         if row is None:
+            database.close()
+
             return {'message': f'Place id \'{place_id}\' does not exist.'}, 400
         else:
             sql = """
@@ -225,6 +232,8 @@ class PlaceInfoAPI(Resource):
                 review_row = database.execute_one(sql, {'place_id': place_id})
                 row['review_rating'] = review_row['rating']
                 row['review_num'] = review_row['review_num']
+        database.close()
+
         return row, 200
 
 @place.route('/<int:place_id>/like')
@@ -244,6 +253,8 @@ class PlaceLikeAPI(Resource):
         sql = f"SELECT id FROM Place WHERE id = {place_id}"
         row = database.execute_one(sql)
         if row is None:
+            database.close()
+
             return {'message': f'Place id \'{place_id}\' does not exist.'}, 400
         else:
             value = {
@@ -273,5 +284,6 @@ class PlaceLikeAPI(Resource):
                     """
             database.execute(sql, value)
             database.commit()
+            database.close()
 
             return 200

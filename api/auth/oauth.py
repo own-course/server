@@ -23,8 +23,6 @@ config.read_file(open('config/config.ini'))
 host = config['DEFAULT']['HOST']
 port = config['DEFAULT']['PORT']
 
-database = Database()
-
 @oauth.route('/kakao')
 @oauth.response(200, 'Success', auth_response_with_refresh_token)
 @oauth.response(400, 'Bad Request', auth_email_response)
@@ -41,6 +39,7 @@ class KakaoLoginAPI(Resource):
     @oauth.expect(model_kakao_auth)
     def post(self):
         """Kakao 로그인"""
+        database = Database()
         token_json = requests.post(
             url="https://kauth.kakao.com/oauth/token",
             headers={
@@ -86,8 +85,10 @@ class KakaoLoginAPI(Resource):
                   f"VALUES ({user}, {name}, {profile_image}, {gender})"
             database.execute(sql)
             database.commit()
+            database.close()
         else:
             user = row['id']
+            database.close()
 
         return get_token(user), 200
 
@@ -109,6 +110,7 @@ class NaverLoginAPI(Resource):
     @oauth.expect(model_naver_auth)
     def post(self):
         """Naver 로그인"""
+        database = Database()
         token_json = get_naver_token(self.state, self.code)
         error = token_json.get("error", None)
         if error is not None:
@@ -137,8 +139,10 @@ class NaverLoginAPI(Resource):
                   f"VALUES ({user}, {name}, {profile_image}, {gender})"
             database.execute(sql)
             database.commit()
+            database.close()
         else:
             user = row['id']
+            database.close()
 
         return get_token(user), 200
 
@@ -158,6 +162,7 @@ class GoogleLoginAPI(Resource):
     @oauth.expect(model_google_auth)
     def post(self):
         """Google 로그인"""
+        database = Database()
         token_json = requests.post(
             url="https://www.googleapis.com/oauth2/v4/token",
             headers={
@@ -201,8 +206,10 @@ class GoogleLoginAPI(Resource):
                   f"VALUES ({user}, {name})"
             database.execute(sql)
             database.commit()
+            database.close()
         else:
             user = row['id']
+            database.close()
 
         return get_token(user), 200
 
