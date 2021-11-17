@@ -45,6 +45,8 @@ class PlaceReviewAPI(Resource):
         """
         row = database.execute_one(sql, {'place_id': place_id})
         if row is None:
+            database.close()
+
             return {'message': f'Place ID \'{place_id}\' does not exist.'}, 400
         else:
             value = {
@@ -64,6 +66,7 @@ class PlaceReviewAPI(Resource):
                 SELECT LAST_INSERT_ID() as id;
             """
             row = database.execute_one(sql, value)
+            database.close()
 
             return row, 200
 
@@ -82,6 +85,8 @@ class PlaceReviewAPI(Resource):
         """
         row = database.execute_one(sql, {'place_id': place_id})
         if row is None:
+            database.close()
+
             return {'message': f'Place ID \'{place_id}\' does not exist.'}, 400
         else:
             page = self.page - 1
@@ -106,6 +111,7 @@ class PlaceReviewAPI(Resource):
                 WHERE place_id = %(place_id)s
             """
             row = database.execute_one(sql, {'place_id': place_id})
+            database.close()
 
             return {'review_num': row['review_num'], 'result': rows}, 200
 
@@ -135,6 +141,8 @@ class GetPlaceReviewImgAPI(Resource):
         """
         row = database.execute_one(sql, {'place_id': place_id})
         if row is None:
+            database.close()
+
             return {'message': f'Place ID \'{place_id}\' does not exist.'}, 400
         else:
             review_num = 0
@@ -161,6 +169,7 @@ class GetPlaceReviewImgAPI(Resource):
                         'review_img': img
                     }
                     result.append(r)
+        database.close()
 
         return {'review_num': review_num, 'review_img_num': review_img_num, 'result': result}, 200
 
@@ -183,6 +192,8 @@ class SetPlaceReviewImgAPI(Resource):
         sql = f"SELECT * FROM Review WHERE user_id = {self.user_id} AND id = {review_id}"
         row = database.execute_one(sql)
         if row is None:
+            database.close()
+
             return {'message': f'Review ID \'{review_id}\' does not exist.'}, 400
         else:
             result = upload_file(request.files)
@@ -200,7 +211,9 @@ class SetPlaceReviewImgAPI(Resource):
                 database.execute(sql, value)
                 database.commit()
             else:
+                database.close()
                 return {'message': result['message']}, 400
+        database.close()
 
         return 200
 
@@ -224,9 +237,13 @@ class ReviewDetailAPI(Resource):
         """
         row = database.execute_one(sql, {'review_id': review_id})
         if row is None:
+            database.close()
+
             return {'message': f'Review ID \'{review_id}\' does not exist.'}, 400
         else:
             row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+            database.close()
+
             return row, 200
 
 @review.route('/<int:review_id>/like')
@@ -246,6 +263,8 @@ class ReviewLikeAPI(Resource):
         sql = f"SELECT id FROM Review WHERE id = {review_id}"
         row = database.execute_one(sql)
         if row is None:
+            database.close()
+
             return {'message': f'Review id \'{review_id}\' does not exist.'}, 400
         else:
             value = {
@@ -292,5 +311,6 @@ class ReviewLikeAPI(Resource):
             database.commit()
             database.execute(sql2, value2)
             database.commit()
+            database.close()
 
             return 200
