@@ -62,7 +62,7 @@ class EmailAuthAPI(Resource):
                 'code': self.code}, 200
 
 @auth.route('/signup')
-@auth.response(200, 'Success')
+@auth.response(200, 'Success', auth_response_with_refresh_token)
 class SignUpAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -90,9 +90,14 @@ class SignUpAPI(Resource):
         """
         database.execute(sql, value)
         database.commit()
+
+        sql = """
+            SELECT LAST_INSERT_ID() as id;
+        """
+        id = database.execute_one(sql)
         database.close()
 
-        return 200
+        return get_token(id['id']), 200
 
 @auth.route('/signin')
 @auth.response(200, 'Success', auth_response_with_refresh_token)
