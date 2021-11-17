@@ -169,18 +169,60 @@ class SaveCourseAPI(Resource):
 
         return 200
 
-    @course.response(200, 'Success', _course_list)
+@course.route('/list')
+@course.doc(params={
+        'sort': {'description': 'location, cost or hour', 'in': 'query', 'type': 'string'},
+        'longitude':
+            {'description': 'longitude', 'in': 'query', 'type': 'float'},
+        'latitude':
+            {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    })
+@course.response(200, 'Success', _course_list)
+class GetCourseListAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        parser = api.parser()
+        parser.add_argument('sort', type=str)
+        parser.add_argument('longitude', type=float)
+        parser.add_argument('latitude', type=float)
+        args = parser.parse_args()
+
+        self.sort = args['sort']
+        self.longitude = args['longitude']
+        self.latitude = args['latitude']
+        self.user_id = get_jwt_identity()
+
     @course.doc(security='apiKey')
     def get(self):
-        """저장한 내 코스 리스트 불러오기"""
+        """저장한 내 코스 목록 불러오기"""
         database = Database()
         value = {
-            'user_id': self.user_id
+            'user_id': self.user_id,
+            'longitude': self.longitude,
+            'latitude': self.latitude
         }
-        sql = """
-            SELECT id, course_name, cost, hours, address FROM Course
-            WHERE user_id = %(user_id)s
-        """
+        if self.sort == 'location':
+            sql = """
+                SELECT id, course_name, cost, hours, address,
+                (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
+                * cos(radians(Course.longitude) - radians(%(longitude)s))
+                + sin(radians(%(latitude)s)) * sin(radians(Course.latitude)))) AS distance
+                FROM Course
+                WHERE user_id = %(user_id)s
+                ORDER BY distance
+            """
+        elif self.sort == 'cost':
+            sql = """
+                SELECT id, course_name, cost, hours, address FROM Course
+                WHERE user_id = %(user_id)s ORDER BY cost
+            """
+        elif self.sort == 'hour':
+            sql = """
+                SELECT id, course_name, cost, hours, address FROM Course
+                WHERE user_id = %(user_id)s ORDER BY hours
+            """
         rows = database.execute_all(sql, value)
         database.close()
 
