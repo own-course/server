@@ -93,6 +93,8 @@ class CourseDto:
         'cost': fields.Integer,
         'hours': fields.Float,
         'address': fields.String,
+        'longitude': fields.Float,
+        'latitude': fields.Float,
         'course_info': fields.List(fields.Nested(course_info), action='append', description='장소 개수 만큼 입력')
     })
     course_list = api.model('course_list', {
