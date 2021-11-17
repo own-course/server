@@ -12,6 +12,9 @@ class UserDto:
         'platform_type': fields.String(example='Email'),
         'email': fields.String
     })
+    keyword = api.model('keyword', {
+        'keyword': fields.String(example='["세련", "독특"]')
+    })
     liked_places = api.model('liked_places', {
         'id': fields.Integer,
         'name': fields.String,
