@@ -7,6 +7,7 @@ from util.upload import upload_file
 
 user = UserDto.api
 _profile = UserDto.profile
+_keyword = UserDto.keyword
 _user_error = UserDto.user_error
 _liked_places = UserDto.liked_places
 _profile_info = UserDto.profile_info
@@ -110,6 +111,41 @@ class SetProfileImgAPI(Resource):
             database.close()
 
             return {'message': result['message']}, 400
+        database.close()
+
+        return 200
+
+@user.route('/profile/keyword')
+class SetKeywordAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        parser = api.parser()
+        parser.add_argument('keyword', type=str)
+        args = parser.parse_args()
+
+        self.keyword = args['keyword']
+        self.user_id = get_jwt_identity()
+
+    @user.expect(_keyword)
+    @user.doc(security='apiKey')
+    @user.response(200, 'Success')
+    @user.response(400, 'Bad Request', _user_error)
+    def put(self):
+        """분위기 키워드 입력"""
+        database = Database()
+        sql = f"SELECT * FROM Profile WHERE user_id = {self.user_id}"
+        row = database.execute_one(sql)
+        if row is None:
+            database.close()
+
+            return {'message': 'The user does not exist.'}, 400
+
+        sql = f"UPDATE Profile SET keyword = '{self.keyword}'" \
+              f"WHERE user_id = {self.user_id}"
+        database.execute(sql)
+        database.commit()
         database.close()
 
         return 200
