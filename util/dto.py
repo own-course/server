@@ -5,6 +5,13 @@ class UserDto:
     profile = api.model('profile', {
         'nickname': fields.String
     })
+    profile_info = api.model('profile_info', {
+        'user_id': fields.Integer,
+        'nickname': fields.String,
+        'profile_img': fields.String,
+        'platform_type': fields.String(example='Email'),
+        'email': fields.String
+    })
     liked_places = api.model('liked_places', {
         'id': fields.Integer,
         'name': fields.String,
@@ -71,6 +78,11 @@ class ReviewDto:
         'user_name': fields.String,
         'profile_img': fields.String
     })
+    review_img_detail = api.model('review_img_detail', {
+        'review_id': fields.Integer,
+        'rating': fields.Float,
+        'review_img': fields.String
+    })
     review_error = api.model('review_error', {
         'message': fields.String
     })
@@ -78,7 +90,12 @@ class ReviewDto:
         'review_num': fields.Integer,
         'result': fields.List(fields.Nested(review_detail))
     })
-
+    review_img = api.model('review_img', {
+        'review_num': fields.Integer,
+        'review_img_num': fields.Integer,
+        'result': fields.List(fields.Nested(review_img_detail))
+    })
+    
 class CourseDto:
     api = Namespace('Course', description='코스')
     course_info = api.model('course_info', {
