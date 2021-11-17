@@ -74,6 +74,8 @@ class SaveCourseAPI(Resource):
         parser.add_argument('cost', type=int)
         parser.add_argument('hours', type=float)
         parser.add_argument('address', type=str)
+        parser.add_argument('longitude', type=float)
+        parser.add_argument('latitude', type=float)
         parser.add_argument('course_info', type=dict, action='append')
         args = parser.parse_args()
 
@@ -82,6 +84,8 @@ class SaveCourseAPI(Resource):
         self.cost = args['cost']
         self.hours = args['hours']
         self.address = args['address']
+        self.longitude = args['longitude']
+        self.latitude = args['latitude']
         self.course_info = args['course_info']
         self.user_id = get_jwt_identity()
 
@@ -98,10 +102,13 @@ class SaveCourseAPI(Resource):
             'cost': self.cost,
             'hours': self.hours,
             'address': self.address,
+            'longitude': self.longitude,
+            'latitude': self.latitude
         }
         sql = """
-            INSERT INTO Course (user_id, course_name, place_num, cost, hours, address)
-            VALUES (%(user_id)s, %(course_name)s, %(place_num)s, %(cost)s, %(hours)s, %(address)s)
+            INSERT INTO Course (user_id, course_name, place_num, cost, hours, address, longitude, latitude)
+            VALUES (%(user_id)s, %(course_name)s, %(place_num)s, %(cost)s, %(hours)s,
+            %(address)s, %(longitude)s, %(latitude)s)
         """
         database.execute(sql, value)
         database.commit()
@@ -111,6 +118,40 @@ class SaveCourseAPI(Resource):
         """
         course_id = database.execute_one(sql)
         for course in self.course_info:
+            # if course['avg_cost'] is None and course['popular_menu'] is None:
+            #     value = {
+            #         'course_id': course_id['id'],
+            #         'place_id': course['place_id'],
+            #         'place_order': course['place_order'],
+            #         'avg_cost': course['avg_cost'],
+            #     }
+            #     sql = """
+            #         INSERT INTO Course_Place (course_id, place_id, place_order)
+            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s)
+            #     """
+            # elif course['avg_cost'] is None:
+            #     value = {
+            #         'course_id': course_id['id'],
+            #         'place_id': course['place_id'],
+            #         'place_order': course['place_order'],
+            #         'popular_menu': course['popular_menu'],
+            #     }
+            #     sql = """
+            #         INSERT INTO Course_Place (course_id, place_id, place_order, popular_menu)
+            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(popular_menu)s)
+            #     """
+            # elif course['popular_menu'] is None:
+            #     value = {
+            #         'course_id': course_id['id'],
+            #         'place_id': course['place_id'],
+            #         'place_order': course['place_order'],
+            #         'avg_cost': course['avg_cost'],
+            #     }
+            #     sql = """
+            #         INSERT INTO Course_Place (course_id, place_id, place_order, avg_cost)
+            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(avg_cost)s)
+            #     """
+            # else:
             value = {
                 'course_id': course_id['id'],
                 'place_id': course['place_id'],
@@ -124,6 +165,7 @@ class SaveCourseAPI(Resource):
             """
             database.execute(sql, value)
             database.commit()
+        database.close()
 
         return 200
 
@@ -140,5 +182,16 @@ class SaveCourseAPI(Resource):
             WHERE user_id = %(user_id)s
         """
         rows = database.execute_all(sql, value)
+        database.close()
 
         return rows, 200
+
+@course.route('/<int:course_id>/detail')
+class SaveCourseDetailAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+    def get(self):
+        """코스 상세 정보 (미완성)"""
+        pass
