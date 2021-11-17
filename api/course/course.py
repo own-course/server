@@ -107,7 +107,8 @@ class SaveCourseAPI(Resource):
         }
         sql = """
             INSERT INTO Course (user_id, course_name, place_num, cost, hours, address, longitude, latitude)
-            VALUES (%(user_id)s, %(course_name)s, %(place_num)s, %(cost)s, %(hours)s, %(address)s, %(longitude)s, %(latitude)s)
+            VALUES (%(user_id)s, %(course_name)s, %(place_num)s, %(cost)s, %(hours)s,
+            %(address)s, %(longitude)s, %(latitude)s)
         """
         database.execute(sql, value)
         database.commit()
@@ -117,6 +118,40 @@ class SaveCourseAPI(Resource):
         """
         course_id = database.execute_one(sql)
         for course in self.course_info:
+            # if course['avg_cost'] is None and course['popular_menu'] is None:
+            #     value = {
+            #         'course_id': course_id['id'],
+            #         'place_id': course['place_id'],
+            #         'place_order': course['place_order'],
+            #         'avg_cost': course['avg_cost'],
+            #     }
+            #     sql = """
+            #         INSERT INTO Course_Place (course_id, place_id, place_order)
+            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s)
+            #     """
+            # elif course['avg_cost'] is None:
+            #     value = {
+            #         'course_id': course_id['id'],
+            #         'place_id': course['place_id'],
+            #         'place_order': course['place_order'],
+            #         'popular_menu': course['popular_menu'],
+            #     }
+            #     sql = """
+            #         INSERT INTO Course_Place (course_id, place_id, place_order, popular_menu)
+            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(popular_menu)s)
+            #     """
+            # elif course['popular_menu'] is None:
+            #     value = {
+            #         'course_id': course_id['id'],
+            #         'place_id': course['place_id'],
+            #         'place_order': course['place_order'],
+            #         'avg_cost': course['avg_cost'],
+            #     }
+            #     sql = """
+            #         INSERT INTO Course_Place (course_id, place_id, place_order, avg_cost)
+            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(avg_cost)s)
+            #     """
+            # else:
             value = {
                 'course_id': course_id['id'],
                 'place_id': course['place_id'],
@@ -130,6 +165,7 @@ class SaveCourseAPI(Resource):
             """
             database.execute(sql, value)
             database.commit()
+        database.close()
 
         return 200
 
@@ -146,6 +182,7 @@ class SaveCourseAPI(Resource):
             WHERE user_id = %(user_id)s
         """
         rows = database.execute_all(sql, value)
+        database.close()
 
         return rows, 200
 
@@ -156,4 +193,5 @@ class SaveCourseDetailAPI(Resource):
         super().__init__(api, args, kwargs)
 
     def get(self):
-        """코스 상세 정보"""
+        """코스 상세 정보 (미완성)"""
+        pass
