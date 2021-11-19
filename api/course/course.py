@@ -8,7 +8,7 @@ course = CourseDto.api
 _course = CourseDto.course
 _course_error = CourseDto.course_error
 _course_list = CourseDto.course_list
-
+_course_detail = CourseDto.course_detail
 @course.doc(params={
     'category':
         {'description': '배열로 입력 ex) ["ALL"] or ["AT"] or ["AT", "FD", "CE2", "CE3", "AC5"]\n\n'
@@ -229,11 +229,57 @@ class GetCourseListAPI(Resource):
         return rows, 200
 
 @course.route('/<int:course_id>/detail')
+@course.response(200, 'Success', _course_detail)
+@course.response(400, 'Bad Request', _course_error)
 class SaveCourseDetailAPI(Resource):
     @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
-    def get(self):
-        """코스 상세 정보 (미완성)"""
-        pass
+    @course.doc(security='apiKey')
+    def get(self, course_id):
+        """코스 상세 정보"""
+        database = Database()
+        value = {
+            'course_id': course_id
+        }
+        sql = """
+            SELECT * FROM Course WHERE id = %(course_id)s
+        """
+        row = database.execute_one(sql, value)
+        if row is None:
+            database.close()
+
+            return {'message': f'Course id \'{course_id}\' does not exist.'}, 400
+
+        sql = """
+            SELECT Course_Place.place_id, Course_Place.place_order, Course_Place.avg_cost, Course_Place.popular_menu,
+            Place.name, Place.address, Place.road_address, Place.categories, Place.hashtags,
+            Place.phone, Place.url, Place.longitude, Place.latitude, Place.descriptions
+            FROM Course_Place JOIN Place
+            WHERE Course_Place.course_id = %(course_id)s AND Course_Place.place_id = Place.id
+        """
+        rows = database.execute_all(sql, value)
+
+        for row in rows:
+            sql = """
+                SELECT * FROM Review 
+                WHERE place_id = %(place_id)s
+            """
+            review_row = database.execute_one(sql, {'place_id': row['place_id']})
+            if review_row is None:
+                row['review_rating'] = 0
+                row['review_num'] = 0
+
+            else:
+                sql = """
+                    SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
+                    FROM Review
+                    WHERE place_id = %(place_id)s
+                """
+                review_row = database.execute_one(sql, {'place_id': row['place_id']})
+                row['review_rating'] = review_row['rating']
+                row['review_num'] = review_row['review_num']
+        database.close()
+
+        return rows, 200
