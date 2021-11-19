@@ -124,6 +124,24 @@ class CourseDto:
         'hours': fields.Float,
         'address': fields.String
     })
+    course_detail = api.model('course_detail', {
+        'place_id': fields.Integer,
+        'place_order': fields.Integer,
+        'avg_cost': fields.Integer,
+        'popular_menu': fields.String,
+        'name': fields.String,
+        'address': fields.String,
+        'road_address': fields.String,
+        'categories': fields.String(example='["AT1","AT2"]'),
+        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'phone': fields.String,
+        'url': fields.String,
+        'longitude': fields.Float,
+        'latitude': fields.Float,
+        'descriptions': fields.String,
+        'review_rating': fields.Float,
+        'review_num': fields.Integer
+    })
     course_error = api.model('course_error', {
         'message': fields.String
     })
