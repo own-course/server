@@ -9,6 +9,8 @@ _course = CourseDto.course
 _course_error = CourseDto.course_error
 _course_list = CourseDto.course_list
 _course_detail = CourseDto.course_detail
+
+
 @course.doc(params={
     'category':
         {'description': '배열로 입력 ex) ["ALL"] or ["AT"] or ["AT", "FD", "CE2", "CE3", "AC5"]\n\n'
@@ -61,6 +63,7 @@ class RecommendCourseAPI(Resource):
         database = Database()
         category = self.category[2:-2].replace('", "', "|")
         pass
+
 
 @course.route('')
 class SaveCourseAPI(Resource):
@@ -169,14 +172,17 @@ class SaveCourseAPI(Resource):
 
         return 200
 
+
 @course.route('/list')
 @course.doc(params={
-        'sort': {'description': 'location, cost or hour', 'in': 'query', 'type': 'string'},
-        'longitude':
-            {'description': 'longitude', 'in': 'query', 'type': 'float'},
-        'latitude':
-            {'description': 'latitude', 'in': 'query', 'type': 'float'},
-    })
+    'sort': {'description': 'location, cost or hour', 'in': 'query', 'type': 'string'},
+    'longitude':
+        {'description': 'longitude', 'in': 'query', 'type': 'float'},
+    'latitude':
+        {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'search':
+        {'description': 'search by course name or address (검색어 입력시 사용)', 'in': 'query', 'type': 'string'}
+})
 @course.response(200, 'Success', _course_list)
 class GetCourseListAPI(Resource):
     @jwt_required()
@@ -187,11 +193,13 @@ class GetCourseListAPI(Resource):
         parser.add_argument('sort', type=str)
         parser.add_argument('longitude', type=float)
         parser.add_argument('latitude', type=float)
+        parser.add_argument('search', type=str, required=False)
         args = parser.parse_args()
 
         self.sort = args['sort']
         self.longitude = args['longitude']
         self.latitude = args['latitude']
+        self.search = args['search']
         self.user_id = get_jwt_identity()
 
     @course.doc(security='apiKey')
@@ -201,32 +209,59 @@ class GetCourseListAPI(Resource):
         value = {
             'user_id': self.user_id,
             'longitude': self.longitude,
-            'latitude': self.latitude
+            'latitude': self.latitude,
+            'search': self.search
         }
         if self.sort == 'location':
-            sql = """
-                SELECT id, course_name, cost, hours, address,
-                (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
-                * cos(radians(Course.longitude) - radians(%(longitude)s))
-                + sin(radians(%(latitude)s)) * sin(radians(Course.latitude)))) AS distance
-                FROM Course
-                WHERE user_id = %(user_id)s
-                ORDER BY distance
-            """
+            if self.search is None:
+                sql = """
+                    SELECT id, course_name, cost, hours, address,
+                    (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
+                    * cos(radians(Course.longitude) - radians(%(longitude)s))
+                    + sin(radians(%(latitude)s)) * sin(radians(Course.latitude)))) AS distance
+                    FROM Course
+                    WHERE user_id = %(user_id)s
+                    ORDER BY distance
+                """
+            else:
+                sql = """
+                    SELECT id, course_name, cost, hours, address,
+                    (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
+                    * cos(radians(Course.longitude) - radians(%(longitude)s))
+                    + sin(radians(%(latitude)s)) * sin(radians(Course.latitude)))) AS distance
+                    FROM Course
+                    WHERE user_id = %(user_id)s AND course_name REGEXP %(search)s OR address REGEXP %(search)s
+                    ORDER BY distance
+                """
         elif self.sort == 'cost':
-            sql = """
-                SELECT id, course_name, cost, hours, address FROM Course
-                WHERE user_id = %(user_id)s ORDER BY cost
-            """
+            if self.search is None:
+                sql = """
+                    SELECT id, course_name, cost, hours, address FROM Course
+                    WHERE user_id = %(user_id)s ORDER BY cost
+                """
+            else:
+                sql = """
+                    SELECT id, course_name, cost, hours, address FROM Course
+                    WHERE user_id = %(user_id)s AND course_name REGEXP %(search)s OR address REGEXP %(search)s
+                    ORDER BY cost
+                """
         elif self.sort == 'hour':
-            sql = """
-                SELECT id, course_name, cost, hours, address FROM Course
-                WHERE user_id = %(user_id)s ORDER BY hours
-            """
+            if self.search is None:
+                sql = """
+                    SELECT id, course_name, cost, hours, address FROM Course
+                    WHERE user_id = %(user_id)s ORDER BY hours
+                """
+            else:
+                sql = """
+                    SELECT id, course_name, cost, hours, address FROM Course
+                    WHERE user_id = %(user_id)s AND course_name REGEXP %(search)s OR address REGEXP %(search)s
+                    ORDER BY hours
+                """
         rows = database.execute_all(sql, value)
         database.close()
 
         return rows, 200
+
 
 @course.route('/<int:course_id>/detail')
 @course.response(200, 'Success', _course_detail)
