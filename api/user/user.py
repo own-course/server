@@ -13,6 +13,7 @@ _user_error = UserDto.user_error
 _liked_places = UserDto.liked_places
 _profile_info = UserDto.profile_info
 _user_review = UserDto.user_review
+_user_TSC = UserDto.user_TSC
 
 
 @user.route('/profile')
@@ -307,3 +308,91 @@ class GetReviewAPI(Resource):
         database.close()
 
         return {'review_num': row['review_num'], 'result': rows}, 200
+
+
+@user.route('/TSC')
+@user.response(200, 'Success')
+class TSCTestAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        parser = api.parser()
+        parser.add_argument('TSC_answer', type=str)
+        args = parser.parse_args()
+
+        self.TSC_answer = args['TSC_answer']
+        self.user_id = get_jwt_identity()
+
+    @user.expect(_user_TSC)
+    @user.doc(security='apiKey')
+    def put(self):
+        """TSC 테스트"""
+        answer = self.TSC_answer
+        T = 0
+        S = 0
+        C = 0
+        for i in range(0, 3):
+            result = TSCScore(answer[i])
+            S += result[0]
+            T += result[1]
+        for i in range(3, 4):
+            result = TSCScore(answer[i])
+            T += result[0]
+            S += result[1]
+        for i in range(4, 6):
+            result = TSCScore(answer[i])
+            S += result[0]
+            C += result[1]
+        for i in range(6, 8):
+            result = TSCScore(answer[i])
+            C += result[0]
+            S += result[1]
+        for i in range(8, 9):
+            result = TSCScore(answer[i])
+            T += result[0]
+            C += result[1]
+        for i in range(9, 12):
+            result = TSCScore(answer[i])
+            C += result[0]
+            T += result[1]
+        type = myTSCType(T, S, C)
+
+        database = Database()
+        value = {
+            'T': round(T / 1.2, 3),
+            'S': round(S / 1.2, 3),
+            'C': round(C / 1.2, 3),
+            'tsc_type': type,
+            'user_id': self.user_id
+        }
+        sql = """
+            UPDATE Profile SET t = %(T)s, s = %(S)s, c = %(C)s, tsc_type = %(tsc_type)s
+            WHERE user_id = %(user_id)s
+        """
+        database.execute(sql, value)
+        database.commit()
+        database.close()
+
+        return {'TSC_type': type}, 200
+
+
+def TSCScore(answer):
+    if answer == "1":
+        return [10, 0]
+    elif answer == "2":
+        return [7.5, 2.5]
+    elif answer == "3":
+        return [5, 5]
+    elif answer == "4":
+        return [2.5, 7.5]
+    elif answer == "5":
+        return [0, 10]
+
+
+def myTSCType(T, S, C):
+    TSC = [['T', T], ['S', S], ['C', C]]
+    TSC.sort(key=lambda x: x[1], reverse=True)
+    type = TSC[0][0] + TSC[1][0] + TSC[2][0]
+
+    return type
