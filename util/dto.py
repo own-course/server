@@ -59,18 +59,18 @@ class PlaceDto:
         'id': fields.Integer,
         'name': fields.String,
         'address': fields.String,
-        'categories': fields.String(example='["AT1","AT2"]'),
+        'categories': fields.String(example='["음료전문","테마카페"]'),
         'hashtags': fields.String(example='["조용한","데이트"]'),
         'distance': fields.Float,
         'review_rating': fields.Float,
-        'review_num': fields.Integer
+        'review_num': fields.Integer,
+        'like': fields.Integer
     })
     place_detail = api.model('place_detail', {
         'id': fields.Integer,
         'name': fields.String,
         'address': fields.String,
         'road_address': fields.String,
-        'categories': fields.String(example='["AT1","AT2"]'),
         'hashtags': fields.String(example='["조용한","데이트"]'),
         'phone': fields.String,
         'url': fields.String,
@@ -78,7 +78,8 @@ class PlaceDto:
         'latitude': fields.Float,
         'descriptions': fields.String,
         'review_rating': fields.Float,
-        'review_num': fields.Integer
+        'review_num': fields.Integer,
+        'like': fields.Integer
     })
     place_error = api.model('place_error', {
         'message': fields.String

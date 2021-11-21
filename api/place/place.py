@@ -3,6 +3,7 @@ from flask_restx import Resource
 from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
+from util.utils import categoryToCode, codeToCategory
 
 place = PlaceDto.api
 _place_by_category = PlaceDto.place_by_category
@@ -24,7 +25,8 @@ class RecommendPlaceAPI(Resource):
     'sort': {'description': 'location, popular or taste', 'in': 'query', 'type': 'string'},
     'page':
             {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'},
-    'category': {'description': '배열로 입력 ex) ["ALL"] or ["AT"] or ["AT", "FD", "CE2", "CE3", "AC5"]\n\n'
+    'category': {'description': '배열로 입력 ex) ["전체"] or ["관광명소전체"] or ["관광명소전체","음식점전체","디저트전문",'
+                                '"공방","전시회"]\n\n'
                                 '전체: "ALL",\n\n 관광명소전체: "AT", [공원: "AT1", 야경/풍경: "AT2", 식물원/수목원: "AT3",'
                                 ' 시장: "AT4", 동물원: "AT5", 지역축제: "AT6", 유적지: "AT7", 바다: "AT8", 산/계곡: "AT9"],\n\n '
                                 '음식점전체: "FD", [한식: "FD1", 중식: "FD2", 분식: "FD3", 돈까스/회/일식: "FD4", '
@@ -35,7 +37,7 @@ class RecommendPlaceAPI(Resource):
                                 'VR: "UE5", 방탈출: "UE6", 노래방: "UE7"]\n\n'
                                 '액티비티전체: "AC", [게임/오락: "AC1", 온천/스파: "AC2", 레저스포츠: "AC3", 테마파크: "AC4", '
                                 '아쿠아리움: "AC5", 낚시: "AC6", 캠핑: "AC7"]\n\n'
-                                '문화생활전체: "CT", [영화: "CT1", 전시회: "CT2", 공연: "CT3", 스포츠 경기: "CT4", 미술관: "CT5", '
+                                '문화생활전체: "CT", [영화: "CT1", 전시회: "CT2", 공연: "CT3", 스포츠경기: "CT4", 미술관: "CT5", '
                                 '박물관: "CT6", 쇼핑: "CT7"]',
                  'in': 'query', 'type': 'string'},
     'longitude':
@@ -49,6 +51,7 @@ class RecommendPlaceAPI(Resource):
 @place.response(200, 'Success', _place_by_category)
 @place.response(400, 'Bad Request', _place_error)
 class PlacesByCategoryAPI(Resource):
+    @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
@@ -67,13 +70,13 @@ class PlacesByCategoryAPI(Resource):
         self.longitude = args['longitude']
         self.latitude = args['latitude']
         self.search = args['search']
+        self.user_id = get_jwt_identity()
 
     @place.doc(security='apiKey')
-    @jwt_required()
     def get(self):
         """카테고리별 장소"""
         database = Database()
-        category = self.category[2:-2].replace('", "', "|")
+        category = categoryToCode(self.category)
         page = self.page - 1
         limit = 10
         value = {
@@ -148,11 +151,25 @@ class PlacesByCategoryAPI(Resource):
                         WHERE place_id = %(place_id)s      
                 """
                 review = database.execute_one(sql, {'place_id': row['id']})
-                if review is None:
+                if review['rating'] is None:
                     row['review_rating'] = 0
                     row['review_num'] = 0
-                row['review_rating'] = review['rating']
-                row['review_num'] = review['review_num']
+                else:
+                    row['review_rating'] = review['rating']
+                    row['review_num'] = review['review_num']
+            for row in rows:
+                sql = """
+                    SELECT enabled FROM Place_User
+                    WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+                """
+                like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
+                if like is None:
+                    row['like'] = 0
+                else:
+                    row['like'] = like['enabled']
+            for row in rows:
+                categories = codeToCategory(row['categories'])
+                row['categories'] = categories
             if self.sort == "location" or self.sort == "taste":
                 database.close()
                 return rows, 200
@@ -187,7 +204,7 @@ class PlacesByCategoryAPI(Resource):
                 #     """
                 # rows = database.execute_all(sql, value)
 
-                result = sorted(rows, key=lambda x: str(x['review_rating'])[:3], reverse=False)
+                result = sorted(rows, key=lambda x: str(x['review_rating'])[:3], reverse=True)
                 database.close()
 
                 return result, 200
@@ -201,16 +218,18 @@ class PlacesByCategoryAPI(Resource):
 @place.response(200, 'Success', _place_detail)
 @place.response(400, 'Bad Request', _place_error)
 class PlaceInfoAPI(Resource):
+    @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
+        self.user_id = get_jwt_identity()
+
     @place.doc(security='apiKey')
-    @jwt_required()
     def get(self, place_id):
         """장소 상세정보"""
         database = Database()
         sql = """
-            SELECT id, name, address, road_address, categories, hashtags,
+            SELECT id, name, address, road_address, hashtags,
             phone, url, longitude, latitude, descriptions
             FROM Place
             WHERE id = %(place_id)s AND enabled = 1
@@ -240,6 +259,15 @@ class PlaceInfoAPI(Resource):
                 review_row = database.execute_one(sql, {'place_id': place_id})
                 row['review_rating'] = review_row['rating']
                 row['review_num'] = review_row['review_num']
+            sql = """
+                SELECT enabled FROM Place_User
+                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+            """
+            like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
+            if like is None:
+                row['like'] = 0
+            else:
+                row['like'] = like['enabled']
         database.close()
 
         return row, 200
