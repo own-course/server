@@ -168,7 +168,7 @@ class GetLikedPlaceAPI(Resource):
     @user.doc(security='apiKey')
     @user.doc(params={
         'page':
-            {'description': 'pagination (start=1)', 'in': 'query', 'type': 'int'}}
+            {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'}}
     )
     def get(self):
         """좋아요 누른 장소 불러오기"""

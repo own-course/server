@@ -22,6 +22,8 @@ class RecommendPlaceAPI(Resource):
 
 @place.doc(params={
     'sort': {'description': 'location, popular or taste', 'in': 'query', 'type': 'string'},
+    'page':
+            {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'},
     'category': {'description': '배열로 입력 ex) ["ALL"] or ["AT"] or ["AT", "FD", "CE2", "CE3", "AC5"]\n\n'
                                 '전체: "ALL",\n\n 관광명소전체: "AT", [공원: "AT1", 야경/풍경: "AT2", 식물원/수목원: "AT3",'
                                 ' 시장: "AT4", 동물원: "AT5", 지역축제: "AT6", 유적지: "AT7", 바다: "AT8", 산/계곡: "AT9"],\n\n '
@@ -52,6 +54,7 @@ class PlacesByCategoryAPI(Resource):
 
         parser = api.parser()
         parser.add_argument('sort', type=str, required=True)
+        parser.add_argument('page', type=int, required=True)
         parser.add_argument('category', type=str, required=True)
         parser.add_argument('longitude', type=float, required=True)
         parser.add_argument('latitude', type=float, required=True)
@@ -59,6 +62,7 @@ class PlacesByCategoryAPI(Resource):
         args = parser.parse_args()
 
         self.sort = args['sort']
+        self.page = args['page']
         self.category = args['category']
         self.longitude = args['longitude']
         self.latitude = args['latitude']
@@ -70,12 +74,16 @@ class PlacesByCategoryAPI(Resource):
         """카테고리별 장소"""
         database = Database()
         category = self.category[2:-2].replace('", "', "|")
+        page = self.page - 1
+        limit = 10
         value = {
             'sort': self.sort,
             'category': category,
             'longitude': self.longitude,
             'latitude': self.latitude,
-            'search': self.search
+            'search': self.search,
+            'start': page * limit,
+            'limit': limit
         }
 
         if self.sort == "taste(X)":
@@ -92,7 +100,7 @@ class PlacesByCategoryAPI(Resource):
                             FROM Place
                             WHERE enabled = 1
                             ORDER BY distance
-                            LIMIT 0,30
+                            LIMIT %(start)s, %(limit)s
                     """
                 else:
                     sql = """
@@ -104,7 +112,7 @@ class PlacesByCategoryAPI(Resource):
                             WHERE enabled = 1 
                             AND name REGEXP %(search)s OR address REGEXP %(search)s OR hashtags REGEXP %(search)s
                             ORDER BY distance
-                            LIMIT 0,30
+                            LIMIT %(start)s, %(limit)s
                     """
             else:
                 if self.search is None:
@@ -117,7 +125,7 @@ class PlacesByCategoryAPI(Resource):
                             WHERE enabled = 1
                             AND categories REGEXP %(category)s
                             ORDER BY distance
-                            LIMIT 0,30
+                            LIMIT %(start)s, %(limit)s
                     """
                 else:
                     sql = """
@@ -130,7 +138,7 @@ class PlacesByCategoryAPI(Resource):
                             AND categories REGEXP %(category)s 
                             AND name REGEXP %(search)s OR address REGEXP %(search)s OR hashtags REGEXP %(search)s
                             ORDER BY distance
-                            LIMIT 0,30
+                            LIMIT %(start)s, %(limit)s
                     """
             rows = database.execute_all(sql, value)
             for row in rows:
