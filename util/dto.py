@@ -9,6 +9,7 @@ class UserDto:
     profile_info = api.model('profile_info', {
         'user_id': fields.Integer,
         'nickname': fields.String,
+        'tsc_type': fields.String,
         'profile_img': fields.String,
         'platform_type': fields.String(example='Email'),
         'email': fields.String
@@ -43,6 +44,9 @@ class UserDto:
     })
     user_TSC = api.model('user_TSC', {
         'TSC_answer': fields.String(example='123241534253')
+    })
+    user_TSC_type = api.model('user_TSC_type', {
+        'TSC_type': fields.String
     })
     user_error = api.model('use_error', {
         'message': fields.String

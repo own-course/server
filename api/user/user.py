@@ -14,6 +14,7 @@ _liked_places = UserDto.liked_places
 _profile_info = UserDto.profile_info
 _user_review = UserDto.user_review
 _user_TSC = UserDto.user_TSC
+_user_TSC_type = UserDto.user_TSC_type
 
 
 @user.route('/profile')
@@ -63,7 +64,7 @@ class ProfileAPI(Resource):
         database = Database()
 
         sql = """
-            SELECT Profile.user_id, Profile.nickname, Profile.profile_img,
+            SELECT Profile.user_id, Profile.nickname, Profile.tsc_type, Profile.profile_img,
             User.platform_type, User.email
             FROM Profile JOIN User
             WHERE Profile.user_id = %(user_id)s AND Profile.user_id = User.id
@@ -311,7 +312,7 @@ class GetReviewAPI(Resource):
 
 
 @user.route('/TSC')
-@user.response(200, 'Success')
+@user.response(200, 'Success', _user_TSC_type)
 class TSCTestAPI(Resource):
     @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
