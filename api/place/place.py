@@ -3,6 +3,7 @@ from flask_restx import Resource
 from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
+from util.utils import categoryToCode
 
 place = PlaceDto.api
 _place_by_category = PlaceDto.place_by_category
@@ -24,7 +25,8 @@ class RecommendPlaceAPI(Resource):
     'sort': {'description': 'location, popular or taste', 'in': 'query', 'type': 'string'},
     'page':
             {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'},
-    'category': {'description': '배열로 입력 ex) ["ALL"] or ["AT"] or ["AT", "FD", "CE2", "CE3", "AC5"]\n\n'
+    'category': {'description': '배열로 입력 ex) ["전체"] or ["관광명소전체"] or ["관광명소전체", "음식점전체", "디저트전문",'
+                                ' "공방", "전시회"]\n\n'
                                 '전체: "ALL",\n\n 관광명소전체: "AT", [공원: "AT1", 야경/풍경: "AT2", 식물원/수목원: "AT3",'
                                 ' 시장: "AT4", 동물원: "AT5", 지역축제: "AT6", 유적지: "AT7", 바다: "AT8", 산/계곡: "AT9"],\n\n '
                                 '음식점전체: "FD", [한식: "FD1", 중식: "FD2", 분식: "FD3", 돈까스/회/일식: "FD4", '
@@ -35,7 +37,7 @@ class RecommendPlaceAPI(Resource):
                                 'VR: "UE5", 방탈출: "UE6", 노래방: "UE7"]\n\n'
                                 '액티비티전체: "AC", [게임/오락: "AC1", 온천/스파: "AC2", 레저스포츠: "AC3", 테마파크: "AC4", '
                                 '아쿠아리움: "AC5", 낚시: "AC6", 캠핑: "AC7"]\n\n'
-                                '문화생활전체: "CT", [영화: "CT1", 전시회: "CT2", 공연: "CT3", 스포츠 경기: "CT4", 미술관: "CT5", '
+                                '문화생활전체: "CT", [영화: "CT1", 전시회: "CT2", 공연: "CT3", 스포츠경기: "CT4", 미술관: "CT5", '
                                 '박물관: "CT6", 쇼핑: "CT7"]',
                  'in': 'query', 'type': 'string'},
     'longitude':
@@ -73,7 +75,7 @@ class PlacesByCategoryAPI(Resource):
     def get(self):
         """카테고리별 장소"""
         database = Database()
-        category = self.category[2:-2].replace('", "', "|")
+        category = categoryToCode(self.category)
         page = self.page - 1
         limit = 10
         value = {
