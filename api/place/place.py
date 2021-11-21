@@ -3,7 +3,7 @@ from flask_restx import Resource
 from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
-from util.utils import categoryToCode
+from util.utils import categoryToCode, codeToCategory
 
 place = PlaceDto.api
 _place_by_category = PlaceDto.place_by_category
@@ -25,8 +25,8 @@ class RecommendPlaceAPI(Resource):
     'sort': {'description': 'location, popular or taste', 'in': 'query', 'type': 'string'},
     'page':
             {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'},
-    'category': {'description': '배열로 입력 ex) ["전체"] or ["관광명소전체"] or ["관광명소전체", "음식점전체", "디저트전문",'
-                                ' "공방", "전시회"]\n\n'
+    'category': {'description': '배열로 입력 ex) ["전체"] or ["관광명소전체"] or ["관광명소전체","음식점전체","디저트전문",'
+                                '"공방","전시회"]\n\n'
                                 '전체: "ALL",\n\n 관광명소전체: "AT", [공원: "AT1", 야경/풍경: "AT2", 식물원/수목원: "AT3",'
                                 ' 시장: "AT4", 동물원: "AT5", 지역축제: "AT6", 유적지: "AT7", 바다: "AT8", 산/계곡: "AT9"],\n\n '
                                 '음식점전체: "FD", [한식: "FD1", 중식: "FD2", 분식: "FD3", 돈까스/회/일식: "FD4", '
@@ -167,6 +167,9 @@ class PlacesByCategoryAPI(Resource):
                     row['like'] = 0
                 else:
                     row['like'] = like['enabled']
+            for row in rows:
+                categories = codeToCategory(row['categories'])
+                row['categories'] = categories
             if self.sort == "location" or self.sort == "taste":
                 database.close()
                 return rows, 200
@@ -226,7 +229,7 @@ class PlaceInfoAPI(Resource):
         """장소 상세정보"""
         database = Database()
         sql = """
-            SELECT id, name, address, road_address, categories, hashtags,
+            SELECT id, name, address, road_address, hashtags,
             phone, url, longitude, latitude, descriptions
             FROM Place
             WHERE id = %(place_id)s AND enabled = 1
