@@ -51,6 +51,7 @@ class RecommendPlaceAPI(Resource):
 @place.response(200, 'Success', _place_by_category)
 @place.response(400, 'Bad Request', _place_error)
 class PlacesByCategoryAPI(Resource):
+    @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
@@ -69,9 +70,9 @@ class PlacesByCategoryAPI(Resource):
         self.longitude = args['longitude']
         self.latitude = args['latitude']
         self.search = args['search']
+        self.user_id = get_jwt_identity()
 
     @place.doc(security='apiKey')
-    @jwt_required()
     def get(self):
         """카테고리별 장소"""
         database = Database()
@@ -150,11 +151,22 @@ class PlacesByCategoryAPI(Resource):
                         WHERE place_id = %(place_id)s      
                 """
                 review = database.execute_one(sql, {'place_id': row['id']})
-                if review is None:
+                if review['rating'] is None:
                     row['review_rating'] = 0
                     row['review_num'] = 0
-                row['review_rating'] = review['rating']
-                row['review_num'] = review['review_num']
+                else:
+                    row['review_rating'] = review['rating']
+                    row['review_num'] = review['review_num']
+            for row in rows:
+                sql = """
+                    SELECT enabled FROM Place_User
+                    WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+                """
+                like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
+                if like is None:
+                    row['like'] = 0
+                else:
+                    row['like'] = like['enabled']
             if self.sort == "location" or self.sort == "taste":
                 database.close()
                 return rows, 200
@@ -189,7 +201,7 @@ class PlacesByCategoryAPI(Resource):
                 #     """
                 # rows = database.execute_all(sql, value)
 
-                result = sorted(rows, key=lambda x: str(x['review_rating'])[:3], reverse=False)
+                result = sorted(rows, key=lambda x: str(x['review_rating'])[:3], reverse=True)
                 database.close()
 
                 return result, 200
@@ -203,11 +215,13 @@ class PlacesByCategoryAPI(Resource):
 @place.response(200, 'Success', _place_detail)
 @place.response(400, 'Bad Request', _place_error)
 class PlaceInfoAPI(Resource):
+    @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
+        self.user_id = get_jwt_identity()
+
     @place.doc(security='apiKey')
-    @jwt_required()
     def get(self, place_id):
         """장소 상세정보"""
         database = Database()
@@ -242,6 +256,15 @@ class PlaceInfoAPI(Resource):
                 review_row = database.execute_one(sql, {'place_id': place_id})
                 row['review_rating'] = review_row['rating']
                 row['review_num'] = review_row['review_num']
+            sql = """
+                SELECT enabled FROM Place_User
+                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+            """
+            like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
+            if like is None:
+                row['like'] = 0
+            else:
+                row['like'] = like['enabled']
         database.close()
 
         return row, 200
