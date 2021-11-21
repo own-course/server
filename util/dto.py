@@ -1,5 +1,6 @@
 from flask_restx import Namespace, fields
 
+
 class UserDto:
     api = Namespace('User', description='사용자 API')
     profile = api.model('profile', {
@@ -8,6 +9,7 @@ class UserDto:
     profile_info = api.model('profile_info', {
         'user_id': fields.Integer,
         'nickname': fields.String,
+        'tsc_type': fields.String,
         'profile_img': fields.String,
         'platform_type': fields.String(example='Email'),
         'email': fields.String
@@ -24,9 +26,32 @@ class UserDto:
         'review_rating': fields.Float,
         'review_num': fields.Integer
     })
+    user_review_detail = api.model('user_review_detail', {
+        'review_id': fields.Integer,
+        'place_id': fields.Integer,
+        'name': fields.String,
+        'rating': fields.Float,
+        'content': fields.String,
+        'review_img': fields.String,
+        'likes': fields.Integer,
+        'source': fields.String(example='owncourse'),
+        'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
+        'distance': fields.Float
+    })
+    user_review = api.model('user_review', {
+        'review_num': fields.Integer,
+        'result': fields.List(fields.Nested(user_review_detail))
+    })
+    user_TSC = api.model('user_TSC', {
+        'TSC_answer': fields.String(example='123241534253')
+    })
+    user_TSC_type = api.model('user_TSC_type', {
+        'TSC_type': fields.String
+    })
     user_error = api.model('use_error', {
         'message': fields.String
     })
+
 
 class PlaceDto:
     api = Namespace('Place', description='장소 API')
@@ -58,6 +83,7 @@ class PlaceDto:
     place_error = api.model('place_error', {
         'message': fields.String
     })
+
 
 class ReviewDto:
     api = Namespace('Review', description='장소 리뷰')
@@ -98,7 +124,8 @@ class ReviewDto:
         'review_img_num': fields.Integer,
         'result': fields.List(fields.Nested(review_img_detail))
     })
-    
+
+
 class CourseDto:
     api = Namespace('Course', description='코스')
     course_info = api.model('course_info', {
