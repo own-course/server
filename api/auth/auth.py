@@ -95,6 +95,11 @@ class SignUpAPI(Resource):
             SELECT LAST_INSERT_ID() as id;
         """
         id = database.execute_one(sql)
+        sql = """
+            INSERT INTO Profile (user_id) VALUES (%(user_id)s)
+        """
+        database.execute(sql, {'user_id': id['id']})
+        database.commit()
         database.close()
 
         return get_token(id['id']), 200
