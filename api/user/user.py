@@ -120,7 +120,7 @@ class SetKeywordAPI(Resource):
         super().__init__(api, args, kwargs)
 
         parser = api.parser()
-        parser.add_argument('keyword', type=str)
+        parser.add_argument('keyword', type=str, action='append')
         args = parser.parse_args()
 
         self.keyword = args['keyword']
@@ -135,12 +135,15 @@ class SetKeywordAPI(Resource):
         database = Database()
         sql = f"SELECT * FROM Profile WHERE user_id = {self.user_id}"
         row = database.execute_one(sql)
+        result = []
+        for keyword in self.keyword:
+            result.append(keyword)
         if row is None:
             database.close()
 
             return {'message': 'The user does not exist.'}, 400
 
-        sql = f"UPDATE Profile SET keyword = '{self.keyword}'" \
+        sql = f"UPDATE Profile SET keyword = \"{result}\" " \
               f"WHERE user_id = {self.user_id}"
         database.execute(sql)
         database.commit()
