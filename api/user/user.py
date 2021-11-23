@@ -41,7 +41,7 @@ class ProfileAPI(Resource):
         database = Database()
 
         sql = f"UPDATE Profile SET nickname = '{self.nickname}'" \
-                f"WHERE user_id = {self.user_id}"
+              f"WHERE user_id = {self.user_id}"
         database.execute(sql)
         database.commit()
         database.close()
@@ -54,14 +54,22 @@ class ProfileAPI(Resource):
     def get(self):
         """프로필 정보"""
         database = Database()
-
+        value = {
+            'user_id': self.user_id
+        }
         sql = """
             SELECT Profile.user_id, Profile.nickname, Profile.tsc_type, Profile.profile_img,
             User.platform_type, User.email
             FROM Profile JOIN User
             WHERE Profile.user_id = %(user_id)s AND Profile.user_id = User.id
         """
-        row = database.execute_one(sql, {'user_id': self.user_id})
+        row = database.execute_one(sql, value)
+        sql = """
+            SELECT COUNT(id) AS review_num FROM Review
+            WHERE user_id = %(user_id)s 
+        """
+        review_num = database.execute_one(sql, value)
+        row['review_num'] = review_num['review_num']
         database.close()
 
         return row, 200
