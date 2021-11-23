@@ -16,7 +16,7 @@ class UserDto:
         'review_num': fields.Integer
     })
     keyword = api.model('keyword', {
-        'keyword': fields.String(example='["세련", "독특"]')
+        'keyword': fields.Raw(example=["세련", "독특"])
     })
     liked_places = api.model('liked_places', {
         'id': fields.Integer,
