@@ -97,15 +97,27 @@ class PlaceReviewAPI(Resource):
                 'limit': limit
             }
             sql = """
-                SELECT Review.*, Profile.nickname AS user_name, Profile.profile_img
-                FROM Review JOIN Profile
-                WHERE Review.place_id = %(place_id)s AND Review.user_id = Profile.user_id
-                ORDER BY Review.created_at desc
-                LIMIT %(start)s, %(limit)s 
+                SELECT * FROM Review WHERE place_id = %(place_id)s
+                ORDER BY created_at desc
+                LIMIT %(start)s, %(limit)s
             """
             rows = database.execute_all(sql, value)
             for row in rows:
                 row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+                if row['source'] != 'owncourse':
+                    if row['source'] == 'kakao_map':
+                        row['user_name'] = '카카오맵 사용자'
+                    else:
+                        row['user_name'] = None
+                    row['profile_img'] = None
+                else:
+                    sql = """
+                        SELECT nickname, profile_img FROM Profile
+                        WHERE user_id = %(user_id)s
+                    """
+                    profile = database.execute_one(sql, {'user_id': row['user_id']})
+                    row['user_name'] = profile['nickname']
+                    row['profile_img'] = profile['profile_img']
             sql = """
                 SELECT COUNT(id) AS review_num FROM Review
                 WHERE place_id = %(place_id)s
@@ -159,16 +171,17 @@ class GetPlaceReviewImgAPI(Resource):
             rows = database.execute_all(sql, value)
             for row in rows:
                 review_num += 1
-                imgs = row['review_img'][1:-1]
-                imgs = imgs.split('","')
-                for img in imgs:
-                    review_img_num += 1
-                    r = {
-                        'review_id': row['id'],
-                        'rating': row['rating'],
-                        'review_img': img
-                    }
-                    result.append(r)
+                if row['review_img'] is not None:
+                    imgs = row['review_img'][1:-1]
+                    imgs = imgs.split('","')
+                    for img in imgs:
+                        review_img_num += 1
+                        r = {
+                            'review_id': row['id'],
+                            'rating': row['rating'],
+                            'review_img': img
+                        }
+                        result.append(r)
         database.close()
 
         return {'review_num': review_num, 'review_img_num': review_img_num, 'result': result}, 200
@@ -231,17 +244,34 @@ class ReviewDetailAPI(Resource):
         """리뷰 상세정보"""
         database = Database()
         sql = """
-            SELECT Review.*, Profile.nickname AS user_name, Profile.profile_img
-            FROM Review JOIN Profile
-            WHERE Review.id = %(review_id)s AND Review.user_id = Profile.user_id
+            SELECT * FROM Review WHERE id = %(review_id)s
         """
         row = database.execute_one(sql, {'review_id': review_id})
+        # sql = """
+        #     SELECT Review.*, Profile.nickname AS user_name, Profile.profile_img
+        #     FROM Review JOIN Profile
+        #     WHERE Review.id = %(review_id)s AND Review.user_id = Profile.user_id
+        # """
         if row is None:
             database.close()
 
             return {'message': f'Review ID \'{review_id}\' does not exist.'}, 400
         else:
             row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+            if row['source'] != 'owncourse':
+                if row['source'] == 'kakao_map':
+                    row['user_name'] = '카카오맵 사용자'
+                else:
+                    row['user_name'] = None
+                row['profile_img'] = None
+            else:
+                sql = """
+                    SELECT nickname, profile_img FROM Profile
+                    WHERE user_id = %(user_id)s
+                """
+                profile = database.execute_one(sql, {'user_id': row['user_id']})
+                row['user_name'] = profile['nickname']
+                row['profile_img'] = profile['profile_img']
             database.close()
 
             return row, 200
