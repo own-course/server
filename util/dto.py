@@ -12,7 +12,8 @@ class UserDto:
         'tsc_type': fields.String,
         'profile_img': fields.String,
         'platform_type': fields.String(example='Email'),
-        'email': fields.String
+        'email': fields.String,
+        'review_num': fields.Integer
     })
     keyword = api.model('keyword', {
         'keyword': fields.String(example='["세련", "독특"]')
