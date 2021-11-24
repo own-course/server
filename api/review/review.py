@@ -97,7 +97,8 @@ class PlaceReviewAPI(Resource):
                 'limit': limit
             }
             sql = """
-                SELECT * FROM Review WHERE place_id = %(place_id)s
+                SELECT id, user_id, place_id, rating, content, review_img, likes as like_num, source, created_at 
+                FROM Review WHERE place_id = %(place_id)s
                 ORDER BY created_at desc
                 LIMIT %(start)s, %(limit)s
             """
@@ -118,6 +119,18 @@ class PlaceReviewAPI(Resource):
                     profile = database.execute_one(sql, {'user_id': row['user_id']})
                     row['user_name'] = profile['nickname']
                     row['profile_img'] = profile['profile_img']
+                sql = """
+                    SELECT enabled FROM Review_User
+                    WHERE review_id = %(review_id)s AND user_id = %(user_id)s
+                """
+                like = database.execute_one(sql, {'review_id': row['id'], 'user_id': self.user_id})
+                if like is None:
+                    row['like'] = False
+                else:
+                    if like['enabled'] == 0:
+                        row['like'] = False
+                    else:
+                        row['like'] = True
             sql = """
                 SELECT COUNT(id) AS review_num FROM Review
                 WHERE place_id = %(place_id)s

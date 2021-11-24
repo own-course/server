@@ -109,11 +109,12 @@ class ReviewDto:
         'rating': fields.Float,
         'content': fields.String,
         'review_img': fields.String,
-        'likes': fields.Integer,
+        'like_num': fields.Integer,
         'source': fields.String,
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
         'user_name': fields.String,
-        'profile_img': fields.String
+        'profile_img': fields.String,
+        'like': fields.Boolean
     })
     review_img_detail = api.model('review_img_detail', {
         'review_id': fields.Integer,
