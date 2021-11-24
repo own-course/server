@@ -43,6 +43,12 @@ class UserDto:
         'review_num': fields.Integer,
         'result': fields.List(fields.Nested(user_review_detail))
     })
+    user_notification = api.model('user_notification', {
+        'review_id': fields.Integer,
+        'user_id': fields.Integer,
+        'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
+        'user_name': fields.String
+    })
     user_TSC = api.model('user_TSC', {
         'TSC_answer': fields.String(example='123241534253')
     })
@@ -103,11 +109,12 @@ class ReviewDto:
         'rating': fields.Float,
         'content': fields.String,
         'review_img': fields.String,
-        'likes': fields.Integer,
+        'like_num': fields.Integer,
         'source': fields.String,
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
         'user_name': fields.String,
-        'profile_img': fields.String
+        'profile_img': fields.String,
+        'like': fields.Boolean
     })
     review_img_detail = api.model('review_img_detail', {
         'review_id': fields.Integer,
@@ -164,10 +171,10 @@ class CourseDto:
         'categories': fields.String(example='["AT1","AT2"]'),
         'hashtags': fields.String(example='["조용한","데이트"]'),
         'phone': fields.String,
-        'url': fields.String,
         'longitude': fields.Float,
         'latitude': fields.Float,
         'descriptions': fields.String,
+        'like': fields.Boolean,
         'review_rating': fields.Float,
         'review_num': fields.Integer
     })

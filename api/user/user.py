@@ -13,6 +13,7 @@ _user_error = UserDto.user_error
 _liked_places = UserDto.liked_places
 _profile_info = UserDto.profile_info
 _user_review = UserDto.user_review
+_user_notification = UserDto.user_notification
 _user_TSC = UserDto.user_TSC
 _user_TSC_type = UserDto.user_TSC_type
 
@@ -303,6 +304,40 @@ class GetReviewAPI(Resource):
         database.close()
 
         return {'review_num': row['review_num'], 'result': rows}, 200
+
+
+@user.route('/notification')
+@user.response(200, 'Success', _user_notification)
+class GetNotificationAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        self.user_id = get_jwt_identity()
+
+    @user.doc(security='apiKey')
+    def get(self):
+        """알림"""
+        database = Database()
+        sql = """
+            SELECT Review_User.review_id, Review_User.user_id, Review_User.updated_at as created_at
+            FROM Review_User JOIN Review
+            WHERE Review.user_id = %(user_id)s AND Review.id = Review_User.review_id AND Review_User.enabled = 1
+            ORDER BY created_at desc
+        """
+        rows = database.execute_all(sql, {'user_id': self.user_id})
+        for row in rows:
+            sql = """
+                SELECT nickname FROM Profile
+                WHERE user_id = %(user_id)s
+            """
+            user = database.execute_one(sql, {'user_id': row['user_id']})
+            row['user_name'] = user['nickname']
+            row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+
+        database.close()
+
+        return rows, 200
 
 
 @user.route('/TSC')
