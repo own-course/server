@@ -71,7 +71,7 @@ class PlaceDto:
         'distance': fields.Float,
         'review_rating': fields.Float,
         'review_num': fields.Integer,
-        'like': fields.Integer
+        'like': fields.Boolean
     })
     place_detail = api.model('place_detail', {
         'id': fields.Integer,
@@ -86,7 +86,7 @@ class PlaceDto:
         'descriptions': fields.String,
         'review_rating': fields.Float,
         'review_num': fields.Integer,
-        'like': fields.Integer
+        'like': fields.Boolean
     })
     place_error = api.model('place_error', {
         'message': fields.String

@@ -164,9 +164,12 @@ class PlacesByCategoryAPI(Resource):
                 """
                 like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
                 if like is None:
-                    row['like'] = 0
+                    row['like'] = False
                 else:
-                    row['like'] = like['enabled']
+                    if like['enabled'] == 0:
+                        row['like'] = False
+                    else:
+                        row['like'] = True
             for row in rows:
                 categories = codeToCategory(row['categories'])
                 row['categories'] = categories
@@ -230,7 +233,7 @@ class PlaceInfoAPI(Resource):
         database = Database()
         sql = """
             SELECT id, name, address, road_address, hashtags,
-            phone, url, longitude, latitude, descriptions
+            phone, longitude, latitude, descriptions
             FROM Place
             WHERE id = %(place_id)s AND enabled = 1
         """
@@ -265,9 +268,12 @@ class PlaceInfoAPI(Resource):
             """
             like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
             if like is None:
-                row['like'] = 0
+                row['like'] = False
             else:
-                row['like'] = like['enabled']
+                if like['enabled'] == 0:
+                    row['like'] = False
+                else:
+                    row['like'] = True
         database.close()
 
         return row, 200
