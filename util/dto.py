@@ -171,10 +171,10 @@ class CourseDto:
         'categories': fields.String(example='["AT1","AT2"]'),
         'hashtags': fields.String(example='["조용한","데이트"]'),
         'phone': fields.String,
-        'url': fields.String,
         'longitude': fields.Float,
         'latitude': fields.Float,
         'descriptions': fields.String,
+        'like': fields.Boolean,
         'review_rating': fields.Float,
         'review_num': fields.Integer
     })

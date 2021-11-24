@@ -271,6 +271,8 @@ class SaveCourseDetailAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
+        self.user_id = get_jwt_identity()
+
     @course.doc(security='apiKey')
     def get(self, course_id):
         """코스 상세 정보"""
@@ -290,13 +292,25 @@ class SaveCourseDetailAPI(Resource):
         sql = """
             SELECT Course_Place.place_id, Course_Place.place_order, Course_Place.avg_cost, Course_Place.popular_menu,
             Place.name, Place.address, Place.road_address, Place.categories, Place.hashtags,
-            Place.phone, Place.url, Place.longitude, Place.latitude, Place.descriptions
+            Place.phone, Place.longitude, Place.latitude, Place.descriptions
             FROM Course_Place JOIN Place
             WHERE Course_Place.course_id = %(course_id)s AND Course_Place.place_id = Place.id
         """
         rows = database.execute_all(sql, value)
 
         for row in rows:
+            sql = """
+                SELECT enabled FROM Place_User
+                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+            """
+            like = database.execute_one(sql, {'place_id': row['place_id'], 'user_id': self.user_id})
+            if like is None:
+                row['like'] = False
+            else:
+                if like['enabled'] == 0:
+                    row['like'] = False
+                else:
+                    row['like'] = True
             sql = """
                 SELECT * FROM Review 
                 WHERE place_id = %(place_id)s
