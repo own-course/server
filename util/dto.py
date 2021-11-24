@@ -43,6 +43,12 @@ class UserDto:
         'review_num': fields.Integer,
         'result': fields.List(fields.Nested(user_review_detail))
     })
+    user_notification = api.model('user_notification', {
+        'review_id': fields.Integer,
+        'user_id': fields.Integer,
+        'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
+        'user_name': fields.String
+    })
     user_TSC = api.model('user_TSC', {
         'TSC_answer': fields.String(example='123241534253')
     })
