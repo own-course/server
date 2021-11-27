@@ -5,6 +5,7 @@ from util.dto import UserDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.upload import upload_file
+from util.utils import keywordToVector
 
 user = UserDto.api
 _profile = UserDto.profile
@@ -136,15 +137,20 @@ class SetKeywordAPI(Resource):
         database = Database()
         sql = f"SELECT * FROM Profile WHERE user_id = {self.user_id}"
         row = database.execute_one(sql)
-        result = []
+        keywords = []
+        keyword_vector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        keyword_version = 1
         for keyword in self.keyword:
-            result.append(keyword)
+            keyword_vector = keywordToVector(keyword, keyword_vector)
+            keywords.append(keyword)
         if row is None:
             database.close()
 
             return {'message': 'The user does not exist.'}, 400
 
-        sql = f"UPDATE Profile SET keyword = \"{result}\" " \
+        sql = f"UPDATE Profile " \
+              f"SET keyword = \"{keywords}\", keyword_vector = \"{keyword_vector}\"," \
+              f" keyword_version = {keyword_version} " \
               f"WHERE user_id = {self.user_id}"
         database.execute(sql)
         database.commit()

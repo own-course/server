@@ -221,3 +221,38 @@ def codeToCategory(category):
     result = "[" + result[1:] + "]"
 
     return result
+
+
+def keywordToVector(keyword, vector):
+    idx = 0
+    if keyword == "세련":
+        idx = 0
+    elif keyword == "독특":
+        idx = 1
+    elif keyword == "아기자기":
+        idx = 2
+    elif keyword == "모던":
+        idx = 3
+    elif keyword == "깔끔":
+        idx = 4
+    elif keyword == "아늑":
+        idx = 5
+    elif keyword == "귀엽":
+        idx = 6
+    elif keyword == "깨끗":
+        idx = 7
+    elif keyword == "클래식":
+        idx = 8
+    elif keyword == "고급":
+        idx = 9
+    elif keyword == "아담":
+        idx = 10
+    elif keyword == "조용":
+        idx = 11
+    elif keyword == "따뜻":
+        idx = 12
+    elif keyword == "포근":
+        idx = 13
+    vector[idx] = 1
+
+    return vector
