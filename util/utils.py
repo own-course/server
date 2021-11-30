@@ -12,7 +12,7 @@ def categoryToCode(category):
             result += "|AT1"
         elif category == "야경/풍경":
             result += "|AT2"
-        elif category == "식물원/수목원":
+        elif category == "식물원,수목원":
             result += "|AT3"
         elif category == "시장":
             result += "|AT4"
@@ -34,18 +34,26 @@ def categoryToCode(category):
             result += "|FD2"
         elif category == "분식":
             result += "|FD3"
-        elif category == "돈까스/회/일식":
+        elif category == "일식":
             result += "|FD4"
         elif category == "패스트푸드":
             result += "|FD5"
-        elif category == "아시안/양식":
+        elif category == "아시안,양식":
             result += "|FD6"
-        elif category == "치킨/피자":
+        elif category == "치킨,피자":
             result += "|FD7"
         elif category == "세계음식":
             result += "|FD8"
         elif category == "채식":
             result += "|FD9"
+        elif category == "해산물":
+            result += "|FD10"
+        elif category == "간식":
+            result += "|FD11"
+        elif category == "육류,고기":
+            result += "|FD12"
+        elif category == "기타":
+            result += "|FD13"
         elif category == "카페전체":
             result += "|CE"
         elif category == "음료전문":
@@ -56,7 +64,7 @@ def categoryToCode(category):
             result += "|CE3"
         elif category == "보드카페":
             result += "|CE4"
-        elif category == "애견카페":
+        elif category == "동물카페":
             result += "|CE5"
         elif category == "만화/북카페":
             result += "|CE6"
@@ -82,7 +90,7 @@ def categoryToCode(category):
             result += "|AC"
         elif category == "게임/오락":
             result += "|AC1"
-        elif category == "온천/스파":
+        elif category == "온천,스파":
             result += "|AC2"
         elif category == "레저스포츠":
             result += "|AC3"
@@ -129,7 +137,7 @@ def codeToCategory(category):
         elif category == "AT2":
             result += ",\"야경/풍경\""
         elif category == "AT3":
-            result += ",\"식물원/수목원\""
+            result += ",\"식물원,수목원\""
         elif category == "AT4":
             result += ",\"시장\""
         elif category == "AT5":
@@ -149,17 +157,25 @@ def codeToCategory(category):
         elif category == "FD3":
             result += ",\"분식\""
         elif category == "FD4":
-            result += ",\"돈까스/회/일식\""
+            result += ",\"일식\""
         elif category == "FD5":
             result += ",\"패스트푸드\""
         elif category == "FD6":
-            result += ",\"아시안/양식\""
+            result += ",\"아시안,양식\""
         elif category == "FD7":
-            result += ",\"치킨/피자\""
+            result += ",\"치킨,피자\""
         elif category == "FD8":
             result += ",\"세계음식\""
         elif category == "FD9":
             result += ",\"채식\""
+        elif category == "FD10":
+            result += ",\"해산물\""
+        elif category == "FD11":
+            result += ",\"간식\""
+        elif category == "FD12":
+            result += ",\"육류,고기\""
+        elif category == "FD13":
+            result += ",\"기타\""
         elif category == "CE1":
             result += ",\"음료전문\""
         elif category == "CE2":
@@ -169,7 +185,7 @@ def codeToCategory(category):
         elif category == "CE4":
             result += ",\"보드카페\""
         elif category == "CE5":
-            result += ",\"애견카페\""
+            result += ",\"동물카페\""
         elif category == "CE6":
             result += ",\"만화/북카페\""
         elif category == "CE7":
@@ -191,7 +207,7 @@ def codeToCategory(category):
         elif category == "AC1":
             result += ",\"게임/오락\""
         elif category == "AC2":
-            result += ",\"온천/스파\""
+            result += ",\"온천,스파\""
         elif category == "AC3":
             result += ",\"레저스포츠\""
         elif category == "AC4":
