@@ -3,6 +3,7 @@ from flask_restx import Resource
 from util.dto import CourseDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
+from util.recommend import recommend_poi
 import json
 
 course = CourseDto.api
@@ -54,7 +55,7 @@ class RecommendCourseAPI(Resource):
     def get(self):
         """코스 추천 """
         # POI 추천 결과
-        rec_poi_list = self.recommend_poi()
+        rec_poi_list = recommend_poi(self.user_id, self.latitude, self.longitude, self.distance)
 
         # 카테고리 필터링
         def category_filter(item):
@@ -102,59 +103,6 @@ class RecommendCourseAPI(Resource):
             courses.append(course)
 
         return courses, 200
-
-    def recommend_poi(self):
-        sql = '''
-            SELECT
-                a.id,
-                a.name,
-                a.categories,
-                b.taste,
-                b.service,
-                b.cost,
-                b.taste*c.t + b.service*c.s + b.cost*c.c AS tsc_score,
-                (6371000*acos(cos(radians(%(latitude)s))*cos(radians(a.latitude))*cos(radians(a.longitude)
-                    - radians(%(longitude)s)) + sin(radians(%(latitude)s))*sin(radians(a.latitude))))
-                    AS distance,
-                a.latitude,
-                a.longitude
-            FROM
-                Place a,
-                Place_TSCA b,
-                Profile c
-            WHERE
-                a.id = b.place_id
-                AND a.enabled = 1
-                AND c.user_id = %(user_id)s
-            HAVING distance <= %(distance)s
-            ORDER BY tsc_score DESC, distance ASC
-        '''
-
-        values = {
-            'latitude': self.latitude,
-            'longitude': self.longitude,
-            'user_id': self.user_id,
-            'distance': self.distance
-        }
-        
-        database = Database()
-        database.cursor.execute(sql, values)
-        data = database.cursor.fetchall()
-        database.close()
-        
-        for item in data:
-            # TSC 점수 자료형 변환
-            item['tsc_score'] = float(item['tsc_score'])
-
-            # 카테고리 list
-            item['categories'] = json.loads(item['categories'])
-            item['large_categories'] = []
-            for category in item['categories']:
-                lc = category[:2]
-                if lc not in item['large_categories']:
-                    item['large_categories'].append(lc)
-        
-        return data
 
 
 @course.route('')
