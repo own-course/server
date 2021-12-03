@@ -3,6 +3,7 @@ from flask_restx import Resource
 from util.dto import CourseDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
+import json
 
 course = CourseDto.api
 _course = CourseDto.course
@@ -13,30 +14,22 @@ _course_detail = CourseDto.course_detail
 
 @course.doc(params={
     'category':
-        {'description': '배열로 입력 ex) ["전체"] or ["관광명소전체"] or ["관광명소전체","음식점전체","디저트전문",'
-                                '"공방","전시회"]\n\n'
-                                '관광명소: "관광명소전체", "공원", "야경/풍경", "식물원,수목원", "시장", "동물원", "지역축제", '
-                                '"유적지", "바다", "산/계곡"\n\n'
-                                '음식점: "음식점전체", "한식", "중식", "분식", "일식", "패스트푸드", "아시안,양식", "치킨,피자", '
-                                '"세계음식", "채식", "해산물", "간식", "육류,고기", "기타"\n\n'
-                                '카페: "카페전체", "음료전문", "디저트전문", "테마카페", "보드카페", "동물카페", "만화/북카페", '
-                                '"룸카페"\n\n'
-                                '이색체험: "이색체험전체", "공방", "원데이클래스", "사진스튜디오", "사주/타로", "VR", "방탈출", '
-                                '"노래방"\n\n'
-                                '액티비티: "액티비티전체", "게임/오락", "온천,스파", "레저스포츠", "테마파크", "아쿠아리움", '
-                                '"낚시", "캠핑"\n\n'
-                                '문화생활: "문화생활전체", "영화", "전시회", "공연", "스포츠경기", "미술관", "박물관", "쇼핑"\n\n',
+        {'description': '배열로 입력 ex) ["FD"] or ["FD1","FD2","CE1","AT"]\n\n'
+                        '카테고리 대분류 전체를 지칭하는 경우, 하위 카테고리 번호를 쓰지 않고 상위 코드만 입력\n'
+                        'ex) 음식점 전체를 선택한 경우: ["FD"], 한식과 중식을 선택한 경우: ["FD1", "FD2"]\n\n'
+                        '카테고리 코드: https://aged-dog-e5f.notion.site/d66c00aef41149a09450ae102525c961?v=3262fc0ad0e245e189d6ea67099bf513\n\n',
          'in': 'query', 'type': 'string'},
     'hours': {'description': 'hours in hours (ex) 2', 'in': 'query', 'type': 'float'},
     'distance': {'description': 'distance in meters (ex) 1500', 'in': 'query', 'type': 'int'},
     'cost': {'description': 'cost in won (ex) 30000', 'in': 'query', 'type': 'int'},
-    'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'},
-    'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'}
+    'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'}
 })
 @course.route('/recommend')
 @course.response(200, 'Success')
 @course.response(400, 'Bad Request', _course_error)
 class RecommendCourseAPI(Resource):
+    @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
 
@@ -45,24 +38,123 @@ class RecommendCourseAPI(Resource):
         parser.add_argument('hours', type=float, required=True)
         parser.add_argument('distance', type=int, required=True)
         parser.add_argument('cost', type=int, required=True)
-        parser.add_argument('longitude', type=float, required=True)
         parser.add_argument('latitude', type=float, required=True)
+        parser.add_argument('longitude', type=float, required=True)
         args = parser.parse_args()
 
-        self.category = args['category']
+        self.user_id = get_jwt_identity()
+        self.category = json.loads(args['category'])
         self.hours = args['hours']
         self.distance = args['distance']
         self.cost = args['cost']
-        self.longitude = args['longitude']
         self.latitude = args['latitude']
+        self.longitude = args['longitude']
 
     @course.doc(security='apiKey')
-    @jwt_required()
     def get(self):
-        """코스 추천 (미완성) """
+        """코스 추천 """
+        # POI 추천 결과
+        rec_poi_list = self.recommend_poi()
+
+        # 카테고리 필터링
+        def category_filter(item):
+            return (len(set(item['categories']) & set(self.category)) > 0
+                or len(set(item['large_categories']) & set(self.category)) > 0)
+        poi_list = list(filter(category_filter, rec_poi_list))
+
+        # 사용자 선택 카테고리의 대분류 리스트
+        large_categories = [category[:2] for category in self.category]
+
+        # 카테고리 대분류 별 POI
+        # 카테고리가 여러 개인 POI는 여러 카테고리의 리스트에 존재할 수 있음
+        category_poi = {}
+        for category_list in [poi['large_categories'] for poi in poi_list]:
+            for category in category_list:
+                if category[:2] in large_categories:
+                    category_poi[category] = []
+
+        for poi in poi_list:
+            for category in poi['large_categories']:
+                if category[:2] in large_categories:
+                    category_poi[category].append(poi)
+
+        # 코스 구성 (최대 10개)
+        courses = []
+        course_size = min(min([len(data) for _, data in category_poi.items()]), 10)
+
+        for i in range(0, course_size):
+            course = []
+            category_set = set()
+            
+            for category, data in category_poi.items():
+                poi = data[i]
+                
+                if len(set(poi['large_categories']) & category_set) > 0:
+                    continue
+                
+                course.append(poi)
+                if len(set(poi['large_categories']) & set(large_categories)) > 0:
+                    category_set.update(poi['large_categories'])
+            
+            # TSC순 정렬
+            course = sorted(course, key=lambda poi: poi['tsc_score'], reverse=True)
+            
+            courses.append(course)
+
+        return courses, 200
+
+    def recommend_poi(self):
+        sql = '''
+            SELECT
+                a.id,
+                a.name,
+                a.categories,
+                b.taste,
+                b.service,
+                b.cost,
+                b.taste*c.t + b.service*c.s + b.cost*c.c AS tsc_score,
+                (6371000*acos(cos(radians(%(latitude)s))*cos(radians(a.latitude))*cos(radians(a.longitude)
+                    - radians(%(longitude)s)) + sin(radians(%(latitude)s))*sin(radians(a.latitude))))
+                    AS distance,
+                a.latitude,
+                a.longitude
+            FROM
+                Place a,
+                Place_TSCA b,
+                Profile c
+            WHERE
+                a.id = b.place_id
+                AND a.enabled = 1
+                AND c.user_id = %(user_id)s
+            HAVING distance <= %(distance)s
+            ORDER BY tsc_score DESC, distance ASC
+        '''
+
+        values = {
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'user_id': self.user_id,
+            'distance': self.distance
+        }
+        
         database = Database()
-        category = self.category[2:-2].replace('", "', "|")
-        pass
+        database.cursor.execute(sql, values)
+        data = database.cursor.fetchall()
+        database.close()
+        
+        for item in data:
+            # TSC 점수 자료형 변환
+            item['tsc_score'] = float(item['tsc_score'])
+
+            # 카테고리 list
+            item['categories'] = json.loads(item['categories'])
+            item['large_categories'] = []
+            for category in item['categories']:
+                lc = category[:2]
+                if lc not in item['large_categories']:
+                    item['large_categories'].append(lc)
+        
+        return data
 
 
 @course.route('')
