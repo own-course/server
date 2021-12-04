@@ -87,7 +87,7 @@ class RecommendPlaceAPI(Resource):
                                 '액티비티: "액티비티전체", "게임/오락", "온천,스파", "레저스포츠", "테마파크", "아쿠아리움", '
                                 '"낚시", "캠핑"\n\n'
                                 '문화생활: "문화생활전체", "영화", "전시회", "공연", "스포츠경기", "미술관", "박물관", "쇼핑"\n\n',
-                 'in': 'query', 'type': 'string'},
+                 'in': 'query', 'type': 'raw'},
     'longitude':
         {'description': 'longitude', 'in': 'query', 'type': 'float'},
     'latitude':

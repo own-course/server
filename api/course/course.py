@@ -20,7 +20,7 @@ _course_detail = CourseDto.course_detail
                         '카테고리 대분류 전체를 지칭하는 경우, 하위 카테고리 번호를 쓰지 않고 상위 코드만 입력\n'
                         'ex) 음식점 전체를 선택한 경우: ["FD"], 한식과 중식을 선택한 경우: ["FD1", "FD2"]\n\n'
                         '카테고리 코드: https://aged-dog-e5f.notion.site/d66c00aef41149a09450ae102525c961?v=3262fc0ad0e245e189d6ea67099bf513\n\n',
-         'in': 'query', 'type': 'string'},
+         'in': 'query', 'type': 'raw'},
     'hours': {'description': 'hours in hours (ex) 2', 'in': 'query', 'type': 'float'},
     'distance': {'description': 'distance in meters (ex) 1500', 'in': 'query', 'type': 'int'},
     'cost': {'description': 'cost in won (ex) 30000', 'in': 'query', 'type': 'int'},
