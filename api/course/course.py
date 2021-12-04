@@ -102,6 +102,50 @@ class RecommendCourseAPI(Resource):
             
             courses.append(course)
 
+        database = Database()
+
+        for course in courses:
+            for item in course:
+                value = {
+                    'place_id': item['id'],
+                    'user_id': self.user_id
+                }
+                sql = """
+                    SELECT AVG(CAST(price as FLOAT)) as avg_price FROM Place_Menu
+                    WHERE place_id = %(place_id)s
+                """
+                row = database.execute_one(sql, value)
+                if row['avg_price'] != -1.0 and row['avg_price'] is not None:
+                    item['avg_price'] = int(round(row['avg_price'], -3))
+                else:
+                    item['avg_price'] = 0
+
+                sql = """
+                    SELECT menu_name as representative_menu FROM Place_Menu
+                    WHERE place_id = %(place_id)s AND representative = 1
+                """
+                row = database.execute_one(sql, value)
+                if row is None:
+                    item['representative_menu'] = "정보없음"
+                else:
+                    item['representative_menu'] = row['representative_menu']
+
+                del item['taste'], item['service'], item['cost'], item['tsc_score']
+                del item['distance'], item['latitude'], item['longitude']
+
+                sql = """
+                    SELECT enabled FROM Place_User
+                    WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+                """
+                like = database.execute_one(sql, value)
+                if like is None:
+                    item['like'] = False
+                else:
+                    if like['enabled'] == 0:
+                        item['like'] = False
+                    else:
+                        item['like'] = True
+
         return courses, 200
 
 
