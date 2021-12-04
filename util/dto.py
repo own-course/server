@@ -91,7 +91,6 @@ class PlaceDto:
         'road_address': fields.String,
         'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'phone': fields.String,
-        'url': fields.String,
         'longitude': fields.Float,
         'latitude': fields.Float,
         'descriptions': fields.List(fields.Nested(place_description)),
@@ -180,6 +179,10 @@ class CourseDto:
         'hours': fields.Float,
         'address': fields.String
     })
+    course_place_description = api.model('course_place_description', {
+        'source': fields.String(example="카카오맵"),
+        'description': fields.String
+    })
     course_detail = api.model('course_detail', {
         'place_id': fields.Integer,
         'place_order': fields.Integer,
@@ -188,12 +191,12 @@ class CourseDto:
         'name': fields.String,
         'address': fields.String,
         'road_address': fields.String,
-        'categories': fields.String(example='["AT1","AT2"]'),
-        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'categories': fields.String(example=["음료전문"]),
+        'hashtags': fields.String(example=["조용한", "데이트"]),
         'phone': fields.String,
         'longitude': fields.Float,
         'latitude': fields.Float,
-        'descriptions': fields.String,
+        'descriptions': fields.List(fields.Nested(course_place_description)),
         'like': fields.Boolean,
         'review_rating': fields.Float,
         'review_num': fields.Integer

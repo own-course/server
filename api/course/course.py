@@ -6,6 +6,8 @@ from database.database import Database
 from util.recommend import recommend_poi
 import json
 
+from util.utils import codeToCategory, hashtagToArray, descriptionToArray
+
 course = CourseDto.api
 _course = CourseDto.course
 _course_recommend = CourseDto.course_recommend
@@ -416,6 +418,22 @@ class SaveCourseDetailAPI(Resource):
                 review_row = database.execute_one(sql, {'place_id': row['place_id']})
                 row['review_rating'] = review_row['rating']
                 row['review_num'] = review_row['review_num']
+
+            categories = codeToCategory(row['categories'])
+            if row['hashtags'] is not None:
+                row['hashtags'] = hashtagToArray(row['hashtags'])
+            row['categories'] = categories
+            if row['descriptions'] is not None:
+                description = []
+                row['descriptions'] = descriptionToArray(row['descriptions'])
+                for item in row['descriptions']:
+                    list = {}
+                    items = item.split(',"description":')
+                    list['source'] = items[0][9:]
+                    list['description'] = items[1]
+                    description.append(list)
+                row['descriptions'] = description
+
         database.close()
 
         return rows, 200
