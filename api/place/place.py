@@ -4,22 +4,39 @@ from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.utils import categoryToCode, codeToCategory
+from util.recommend import recommend_poi
 
 place = PlaceDto.api
 _place_by_category = PlaceDto.place_by_category
 _place_detail = PlaceDto.place_detail
 _place_error = PlaceDto.place_error
 
+@place.doc(params={
+    'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'}
+})
 @place.route('/recommend')
+@place.response(200, 'Success')
 class RecommendPlaceAPI(Resource):
+    @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
+        
+        parser = api.parser()
+        parser.add_argument('latitude', type=float, required=True)
+        parser.add_argument('longitude', type=float, required=True)
+        args = parser.parse_args()
+
+        self.user_id = get_jwt_identity()
+        self.latitude = args['latitude']
+        self.longitude = args['longitude']
+        self.distance = 500 # 반경 500m
 
     @place.doc(security='apiKey')
-    @jwt_required()
     def get(self):
-        """홈 탭의 추천 장소 (추가예정)"""
-        pass
+        """홈 탭의 추천 장소"""
+        rec_poi_list = recommend_poi(self.user_id, self.latitude, self.longitude, self.distance)
+        return rec_poi_list, 200
 
 @place.doc(params={
     'sort': {'description': 'location, popular or taste', 'in': 'query', 'type': 'string'},
