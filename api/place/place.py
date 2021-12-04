@@ -3,7 +3,7 @@ from flask_restx import Resource
 from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
-from util.utils import categoryToCode, codeToCategory
+from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray
 from util.recommend import recommend_poi
 
 place = PlaceDto.api
@@ -220,7 +220,10 @@ class PlacesByCategoryAPI(Resource):
                         row['like'] = True
             for row in rows:
                 categories = codeToCategory(row['categories'])
+                if row['hashtags'] is not None:
+                    row['hashtags'] = hashtagToArray(row['hashtags'])
                 row['categories'] = categories
+
             if self.sort == "location" or self.sort == "taste":
                 database.close()
                 return rows, 200
@@ -322,6 +325,19 @@ class PlaceInfoAPI(Resource):
                     row['like'] = False
                 else:
                     row['like'] = True
+            if row['hashtags'] is not None:
+                row['hashtags'] = hashtagToArray(row['hashtags'])
+            if row['descriptions'] is not None:
+                description = []
+                row['descriptions'] = descriptionToArray(row['descriptions'])
+                for item in row['descriptions']:
+                    list = {}
+                    items = item.split(',"description":')
+                    list['source'] = items[0][9:]
+                    list['description'] = items[1]
+                    description.append(list)
+                row['descriptions'] = description
+
         database.close()
 
         return row, 200

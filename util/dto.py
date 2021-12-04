@@ -73,24 +73,28 @@ class PlaceDto:
         'id': fields.Integer,
         'name': fields.String,
         'address': fields.String,
-        'categories': fields.String(example='["음료전문","테마카페"]'),
-        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'categories': fields.Raw(example=["음료전문"]),
+        'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'distance': fields.Float,
         'review_rating': fields.Float,
         'review_num': fields.Integer,
         'like': fields.Boolean
+    })
+    place_description = api.model('place_description', {
+        'source': fields.String(example="카카오맵"),
+        'description': fields.String
     })
     place_detail = api.model('place_detail', {
         'id': fields.Integer,
         'name': fields.String,
         'address': fields.String,
         'road_address': fields.String,
-        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'phone': fields.String,
         'url': fields.String,
         'longitude': fields.Float,
         'latitude': fields.Float,
-        'descriptions': fields.String,
+        'descriptions': fields.List(fields.Nested(place_description)),
         'review_rating': fields.Float,
         'review_num': fields.Integer,
         'like': fields.Boolean
