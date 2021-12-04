@@ -7,6 +7,7 @@ from util.utils import categoryToCode, codeToCategory
 from util.recommend import recommend_poi
 
 place = PlaceDto.api
+_place_recommend = PlaceDto.place_recommend
 _place_by_category = PlaceDto.place_by_category
 _place_detail = PlaceDto.place_detail
 _place_error = PlaceDto.place_error
@@ -16,7 +17,7 @@ _place_error = PlaceDto.place_error
     'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'}
 })
 @place.route('/recommend')
-@place.response(200, 'Success')
+@place.response(200, 'Success', [_place_recommend])
 class RecommendPlaceAPI(Resource):
     @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
@@ -36,7 +37,38 @@ class RecommendPlaceAPI(Resource):
     def get(self):
         """홈 탭의 추천 장소"""
         rec_poi_list = recommend_poi(self.user_id, self.latitude, self.longitude, self.distance)
-        return rec_poi_list, 200
+
+        database = Database()
+        place = []
+        i = 0
+        for item in rec_poi_list:
+            if i == 10:
+                break
+            i += 1
+            del item['taste'], item['service'], item['cost'], item['tsc_score']
+            del item['distance'], item['latitude'], item['longitude']
+
+            value = {
+                'place_id': item['id'],
+                'user_id': self.user_id
+            }
+            sql = """
+                SELECT enabled FROM Place_User
+                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+            """
+            like = database.execute_one(sql, value)
+            if like is None:
+                item['like'] = False
+            else:
+                if like['enabled'] == 0:
+                    item['like'] = False
+                else:
+                    item['like'] = True
+            place.append(item)
+
+        database.close()
+
+        return place, 200
 
 @place.doc(params={
     'sort': {'description': 'location, popular or taste', 'in': 'query', 'type': 'string'},
@@ -64,7 +96,7 @@ class RecommendPlaceAPI(Resource):
         {'description': 'search by place name or place address or place hastags', 'in': 'query', 'type': 'string'}
 })
 @place.route('')
-@place.response(200, 'Success', _place_by_category)
+@place.response(200, 'Success', [_place_by_category])
 @place.response(400, 'Bad Request', _place_error)
 class PlacesByCategoryAPI(Resource):
     @jwt_required()

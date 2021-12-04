@@ -62,6 +62,13 @@ class UserDto:
 
 class PlaceDto:
     api = Namespace('Place', description='장소 API')
+    place_recommend = api.model('place_recommend', {
+        'id': fields.Integer,
+        'name': fields.String,
+        'categories': fields.Raw(example=["FD1"]),
+        'large_categories': fields.Raw(example=["FD"]),
+        'like': fields.Boolean
+    })
     place_by_category = api.model('place_by_category', {
         'id': fields.Integer,
         'name': fields.String,
