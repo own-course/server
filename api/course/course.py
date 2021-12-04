@@ -147,6 +147,8 @@ class RecommendCourseAPI(Resource):
                     else:
                         item['like'] = True
 
+        database.close()
+
         return courses, 200
 
 
@@ -417,3 +419,88 @@ class SaveCourseDetailAPI(Resource):
         database.close()
 
         return rows, 200
+
+
+@course.route('/recommend/home')
+@course.response(200, 'Success', [_course_list])
+@course.doc(params={
+    'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'},
+    'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'}
+})
+class CourseRecommendHomeAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        parser = api.parser()
+        parser.add_argument('longitude', type=float)
+        parser.add_argument('latitude', type=float)
+        args = parser.parse_args()
+
+        self.longitude = args['longitude']
+        self.latitude = args['latitude']
+        self.user_id = get_jwt_identity()
+
+    @course.doc(security='apiKey')
+    def get(self):
+        """홈 탭의 추천 코스"""
+        database = Database()
+        sql = """
+            SELECT tsc_type FROM Profile
+            WHERE user_id = %(user_id)s
+        """
+        row = database.execute_one(sql, {'user_id': self.user_id})
+        value = {
+            'user_id': self.user_id,
+            'longitude': self.longitude,
+            'latitude': self.latitude,
+            'tsc_type': row['tsc_type']
+        }
+        sql = """
+            SELECT 
+                c.id, c.course_name, c.cost, c.hours, c.address,
+                (6371000*acos(cos(radians(%(latitude)s))*cos(radians(c.latitude))*cos(radians(c.longitude)
+                - radians(%(longitude)s)) + sin(radians(%(latitude)s))*sin(radians(c.latitude)))) AS distance
+            FROM 
+                Course c, Profile p 
+            WHERE 
+                c.user_id != %(user_id)s AND p.user_id != %(user_id)s 
+                AND p.tsc_type = %(tsc_type)s AND p.user_id = c.user_id
+            ORDER BY distance
+            LIMIT 0, 10
+        """
+        rows = database.execute_all(sql, value)
+        if len(rows) < 10:
+            value = {
+                'user_id': self.user_id,
+                'longitude': self.longitude,
+                'latitude': self.latitude,
+                'tsc_type': row['tsc_type'],
+                'course_num': 10 - len(rows)
+            }
+            sql = """
+                 SELECT 
+                    c.id, c.course_name, c.cost, c.hours, c.address,
+                    (6371000*acos(cos(radians(%(latitude)s))*cos(radians(c.latitude))*cos(radians(c.longitude)
+                    - radians(%(longitude)s)) + sin(radians(%(latitude)s))*sin(radians(c.latitude)))) AS distance
+                FROM 
+                    Course c, Profile p
+                WHERE 
+                    p.tsc_type != %(tsc_type)s AND p.user_id = c.user_id 
+                    AND c.user_id != %(user_id)s AND p.user_id != %(user_id)s
+                ORDER BY distance
+                LIMIT 0, %(course_num)s
+            """
+            add_rows = database.execute_all(sql, value)
+            if len(rows) == 0:
+                rows = add_rows
+            else:
+                for i in range(0, len(add_rows)):
+                    rows.append(add_rows[i])
+        for item in rows:
+            del item['distance']
+
+        database.close()
+
+        return rows, 200
+
