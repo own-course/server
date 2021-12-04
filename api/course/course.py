@@ -8,6 +8,7 @@ import json
 
 course = CourseDto.api
 _course = CourseDto.course
+_course_recommend = CourseDto.course_recommend
 _course_error = CourseDto.course_error
 _course_list = CourseDto.course_list
 _course_detail = CourseDto.course_detail
@@ -27,7 +28,7 @@ _course_detail = CourseDto.course_detail
     'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'}
 })
 @course.route('/recommend')
-@course.response(200, 'Success')
+@course.response(200, 'Success', [[_course_recommend]])
 @course.response(400, 'Bad Request', _course_error)
 class RecommendCourseAPI(Resource):
     @jwt_required()

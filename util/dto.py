@@ -150,6 +150,15 @@ class CourseDto:
         'avg_cost': fields.Integer,
         'popular_menu': fields.String
     })
+    course_recommend = api.model('course_recommend', {
+        'id': fields.Integer,
+        'name': fields.String,
+        'categories': fields.Raw(example=["FD1"]),
+        'large_categories': fields.Raw(example=["FD"]),
+        'avg_price': fields.Integer,
+        'representative_menu': fields.String,
+        'like': fields.Boolean
+    })
     course = api.model('course', {
         'course_name': fields.String,
         'place_num': fields.Integer,
