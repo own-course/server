@@ -22,8 +22,8 @@ class UserDto:
         'id': fields.Integer,
         'name': fields.String,
         'address': fields.String,
-        'categories': fields.String(example='["AT1","AT2"]'),
-        'hashtags': fields.String(example='["조용한","데이트"]'),
+        'categories': fields.Raw(example=["음료전문", "디저트전문"]),
+        'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'review_rating': fields.Float,
         'review_num': fields.Integer
     })
