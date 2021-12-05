@@ -10,6 +10,7 @@ place = PlaceDto.api
 _place_recommend = PlaceDto.place_recommend
 _place_by_category = PlaceDto.place_by_category
 _place_detail = PlaceDto.place_detail
+_place_like = PlaceDto.place_like
 _place_error = PlaceDto.place_error
 
 @place.doc(params={
@@ -345,7 +346,7 @@ class PlaceInfoAPI(Resource):
         return row, 200
 
 @place.route('/<int:place_id>/like')
-@place.response(200, 'Success')
+@place.response(200, 'Success', _place_like)
 @place.response(400, 'Bad Request', _place_error)
 class PlaceLikeAPI(Resource):
     @jwt_required()
@@ -374,6 +375,7 @@ class PlaceLikeAPI(Resource):
                 WHERE place_id = %(place_id)s AND user_id = %(user_id)s
             """
             row = database.execute_one(sql, value)
+            like = True
             if row is None:
                 sql = """
                     INSERT INTO Place_User (place_id, user_id) 
@@ -385,6 +387,7 @@ class PlaceLikeAPI(Resource):
                         UPDATE Place_User SET enabled = 0 
                         WHERE place_id = %(place_id)s AND user_id = %(user_id)s
                     """
+                    like = False
                 elif row['enabled'] == 0:
                     sql = """
                         UPDATE Place_User SET enabled = 1
@@ -394,4 +397,4 @@ class PlaceLikeAPI(Resource):
             database.commit()
             database.close()
 
-            return 200
+            return {"like": like}, 200

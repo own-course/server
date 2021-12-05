@@ -13,6 +13,7 @@ _review_detail = ReviewDto.review_detail
 _review_error = ReviewDto.review_error
 _review_by_place = ReviewDto.review_by_place
 _review_img = ReviewDto.review_img
+_review_like = ReviewDto.review_like
 
 @review.route('/<int:place_id>')
 @review.doc(params={'place_id': 'place ID'})
@@ -290,7 +291,7 @@ class ReviewDetailAPI(Resource):
             return row, 200
 
 @review.route('/<int:review_id>/like')
-@review.response(200, 'Success')
+@review.response(200, 'Success', _review_like)
 @review.response(400, 'Bad Request', _review_error)
 class ReviewLikeAPI(Resource):
     @jwt_required()
@@ -322,6 +323,7 @@ class ReviewLikeAPI(Resource):
                 WHERE review_id = %(review_id)s AND user_id = %(user_id)s
             """
             row = database.execute_one(sql, value)
+            like = True
             if row is None:
                 sql = """
                     INSERT INTO Review_User (review_id, user_id) 
@@ -337,6 +339,7 @@ class ReviewLikeAPI(Resource):
                         UPDATE Review_User SET enabled = 0 
                         WHERE review_id = %(review_id)s AND user_id = %(user_id)s
                     """
+                    like = False
                     sql2 = """
                         UPDATE Review SET likes = likes - 1 
                         WHERE id = %(review_id)s
@@ -356,4 +359,4 @@ class ReviewLikeAPI(Resource):
             database.commit()
             database.close()
 
-            return 200
+            return {"like": like}, 200

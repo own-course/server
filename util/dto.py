@@ -98,6 +98,9 @@ class PlaceDto:
         'review_num': fields.Integer,
         'like': fields.Boolean
     })
+    place_like = api.model('place_like', {
+        'like': fields.Boolean
+    })
     place_error = api.model('place_error', {
         'message': fields.String
     })
@@ -142,6 +145,9 @@ class ReviewDto:
         'review_num': fields.Integer,
         'review_img_num': fields.Integer,
         'result': fields.List(fields.Nested(review_img_detail))
+    })
+    review_like = api.model('review_like', {
+        'like': fields.Boolean
     })
 
 
