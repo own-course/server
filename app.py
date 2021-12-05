@@ -9,6 +9,7 @@ from api.course.course import course
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 import configparser
+import datetime
 
 config = configparser.ConfigParser()
 config.read_file(open('config/config.ini'))
@@ -30,6 +31,7 @@ app.config['MAIL_PASSWORD'] = config['MAIL']['MAIL_PASSWORD']
 app.config['MAIL_USE_SSL'] = config['MAIL']['MAIL_USE_SSL']
 
 app.config['JWT_SECRET_KEY'] = config['JWT']['JWT_SECRET_KEY']
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(minutes=int(config['JWT']['JWT_ACCESS_TOKEN_EXPIRES']))
 
 jwt = JWTManager(app)
 mail = Mail(app)
