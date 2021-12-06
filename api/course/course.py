@@ -1,4 +1,3 @@
-from flask import make_response
 from flask_restx import Resource
 from util.dto import CourseDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -11,6 +10,7 @@ from util.utils import codeToCategory, hashtagToArray, descriptionToArray
 course = CourseDto.api
 _course = CourseDto.course
 _course_recommend = CourseDto.course_recommend
+_course_replacement = CourseDto.course_replacement
 _course_error = CourseDto.course_error
 _course_list = CourseDto.course_list
 _course_detail = CourseDto.course_detail
@@ -153,6 +153,151 @@ class RecommendCourseAPI(Resource):
 
         return courses, 200
 
+@course.doc(params={
+    'category':
+        {'description': '배열로 입력 ex) ["FD"] or ["FD1","FD2","CE1","AT"]\n\n'
+                        '카테고리 대분류 전체를 지칭하는 경우, 하위 카테고리 번호를 쓰지 않고 상위 코드만 입력\n'
+                        'ex) 음식점 전체를 선택한 경우: ["FD"], 한식과 중식을 선택한 경우: ["FD1", "FD2"]\n\n'
+                        '카테고리 코드: https://aged-dog-e5f.notion.site/d66c00aef41149a09450ae102525c961?v=3262fc0ad0e245e189d6ea67099bf513\n\n',
+         'in': 'query', 'type': 'raw'},
+    'hours': {'description': 'hours in hours (ex) 2', 'in': 'query', 'type': 'float'},
+    'distance': {'description': 'distance in meters (ex) 1500', 'in': 'query', 'type': 'int'},
+    'cost': {'description': 'cost in won (ex) 30000', 'in': 'query', 'type': 'int'},
+    'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'},
+    'place_id': {'description': 'ID of the place to replace', 'in': 'query', 'type': 'int'}
+})
+@course.route('/recommend/replacement')
+@course.response(200, 'Success', [_course_replacement])
+@course.response(400, 'Bad Request', _course_error)
+class RecommendCourseAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        parser = api.parser()
+        parser.add_argument('category', type=str, required=True)
+        parser.add_argument('hours', type=float, required=True)
+        parser.add_argument('distance', type=int, required=True)
+        parser.add_argument('cost', type=int, required=True)
+        parser.add_argument('latitude', type=float, required=True)
+        parser.add_argument('longitude', type=float, required=True)
+        parser.add_argument('place_id', type=int, required=True)
+        args = parser.parse_args()
+
+        self.user_id = get_jwt_identity()
+        self.category = json.loads(args['category'])
+        self.hours = args['hours']
+        self.distance = args['distance']
+        self.cost = args['cost']
+        self.latitude = args['latitude']
+        self.longitude = args['longitude']
+        self.place_id = args['place_id']
+
+    @course.doc(security='apiKey')
+    def get(self):
+        """코스 생성 중 장소 변경 시 대체 할 장소 추천"""
+        # POI 추천 결과
+        rec_poi_list = recommend_poi(self.user_id, self.latitude, self.longitude, self.distance)
+
+        # 카테고리 필터링
+        def category_filter(item):
+            return (len(set(item['categories']) & set(self.category)) > 0
+                or len(set(item['large_categories']) & set(self.category)) > 0)
+        poi_list = list(filter(category_filter, rec_poi_list))
+
+        # 사용자 선택 카테고리의 대분류 리스트
+        large_categories = [category[:2] for category in self.category]
+
+        # 카테고리 대분류 별 POI
+        # 카테고리가 여러 개인 POI는 여러 카테고리의 리스트에 존재할 수 있음
+        category_poi = {}
+        for category_list in [poi['large_categories'] for poi in poi_list]:
+            for category in category_list:
+                if category[:2] in large_categories:
+                    category_poi[category] = []
+
+        for poi in poi_list:
+            for category in poi['large_categories']:
+                if category[:2] in large_categories:
+                    category_poi[category].append(poi)
+
+        database = Database()
+        sql = """
+            SELECT categories FROM Place WHERE id = %(place_id)s
+        """
+        row = database.execute_one(sql, {'place_id': self.place_id})
+        large_category = row['categories'][2:4]
+        places = []
+        for i in range(10, 20):
+            places.append(category_poi[large_category][i])
+
+        for place in places:
+
+            value = {
+                'place_id': place['id'],
+                'user_id': self.user_id
+            }
+            sql = """
+                SELECT AVG(CAST(price as FLOAT)) as avg_price FROM Place_Menu
+                WHERE place_id = %(place_id)s
+            """
+            row = database.execute_one(sql, value)
+            if row['avg_price'] != -1.0 and row['avg_price'] is not None:
+                place['avg_price'] = int(round(row['avg_price'], -3))
+            else:
+                place['avg_price'] = 0
+
+            sql = """
+                SELECT menu_name as representative_menu FROM Place_Menu
+                WHERE place_id = %(place_id)s AND representative = 1
+            """
+            row = database.execute_one(sql, value)
+            if row is None:
+                place['representative_menu'] = "정보없음"
+            else:
+                place['representative_menu'] = row['representative_menu']
+
+            del place['taste'], place['service'], place['cost'], place['tsc_score']
+            del place['distance'], place['latitude'], place['longitude']
+
+            sql = """
+                SELECT enabled FROM Place_User
+                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+            """
+            like = database.execute_one(sql, value)
+            if like is None:
+                place['like'] = False
+            else:
+                if like['enabled'] == 0:
+                    place['like'] = False
+                else:
+                    place['like'] = True
+            sql = """
+                SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
+                FROM Review
+                WHERE place_id = %(place_id)s
+            """
+            review_row = database.execute_one(sql, value)
+            if review_row is None:
+                place['review_rating'] = 0
+                place['review_num'] = 0
+            else:
+                review_row = database.execute_one(sql, value)
+                place['review_rating'] = round(review_row['rating'], 1)
+                place['review_num'] = review_row['review_num']
+            sql = """
+                SELECT hashtags FROM Place WHERE id = %(place_id)s
+            """
+            row = database.execute_one(sql, value)
+            if row['hashtags'] is not None:
+                place['hashtags'] = hashtagToArray(row['hashtags'])
+            else:
+                place['hashtags'] = []
+
+        database.close()
+
+        return places, 200
 
 @course.route('')
 class SaveCourseAPI(Resource):

@@ -168,6 +168,11 @@ class CourseDto:
         'representative_menu': fields.String,
         'like': fields.Boolean
     })
+    course_replacement = api.inherit('course_replacement', course_recommend, {
+        'review_rating': fields.Float(example=4.5),
+        'review_num': fields.Integer,
+        'hashtags': fields.Raw(example=["조용한", "데이트"])
+    })
     course = api.model('course', {
         'course_name': fields.String,
         'place_num': fields.Integer,
