@@ -146,7 +146,7 @@ class PlacesByCategoryAPI(Resource):
                 if self.search is None:
                     sql = """
                             SELECT id, name, address, categories, hashtags,
-                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                             * cos(radians(Place.longitude) - radians(%(longitude)s))
                             + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
                             FROM Place
@@ -157,7 +157,7 @@ class PlacesByCategoryAPI(Resource):
                 else:
                     sql = """
                             SELECT id, name, address, categories, hashtags,
-                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                             * cos(radians(Place.longitude) - radians(%(longitude)s))
                             + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
                             FROM Place
@@ -170,7 +170,7 @@ class PlacesByCategoryAPI(Resource):
                 if self.search is None:
                     sql = """
                             SELECT id, name, address, categories, hashtags,
-                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                             * cos(radians(Place.longitude) - radians(%(longitude)s))
                             + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
                             FROM Place
@@ -182,7 +182,7 @@ class PlacesByCategoryAPI(Resource):
                 else:
                     sql = """
                             SELECT id, name, address, categories, hashtags,
-                            (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                            (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                             * cos(radians(Place.longitude) - radians(%(longitude)s))
                             + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
                             FROM Place

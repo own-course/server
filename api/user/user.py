@@ -268,7 +268,7 @@ class GetReviewAPI(Resource):
             sql = """
                 SELECT Review.id AS review_id, Place.id AS place_id, Place.name, Review.rating, Review.content,
                 Review.review_img, Review.likes, Review.source, Review.created_at, 
-                (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                 * cos(radians(Place.longitude) - radians(%(longitude)s))
                 + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
                 FROM Place JOIN Review
@@ -280,7 +280,7 @@ class GetReviewAPI(Resource):
             sql = """
                 SELECT Review.id AS review_id, Place.id AS place_id, Place.name, Review.rating, Review.content, 
                 Review.review_img, Review.likes, Review.source, Review.created_at,
-                (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                 * cos(radians(Place.longitude) - radians(%(longitude)s))
                 + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
                 FROM Place JOIN Review
@@ -292,7 +292,7 @@ class GetReviewAPI(Resource):
             sql = """
                 SELECT Review.id AS review_id, Place.id AS place_id, Place.name, Review.rating, Review.content, 
                 Review.review_img, Review.likes, Review.source, Review.created_at,
-                (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
+                (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
                 * cos(radians(Place.longitude) - radians(%(longitude)s))
                 + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
                 FROM Place JOIN Review

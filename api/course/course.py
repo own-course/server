@@ -437,7 +437,7 @@ class GetCourseListAPI(Resource):
             if self.search is None:
                 sql = """
                     SELECT id, course_name, cost, hours, address,
-                    (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
+                    (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
                     * cos(radians(Course.longitude) - radians(%(longitude)s))
                     + sin(radians(%(latitude)s)) * sin(radians(Course.latitude)))) AS distance
                     FROM Course
@@ -447,7 +447,7 @@ class GetCourseListAPI(Resource):
             else:
                 sql = """
                     SELECT id, course_name, cost, hours, address,
-                    (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
+                    (6371000 * acos(cos(radians(%(latitude)s)) * cos(radians(Course.latitude))
                     * cos(radians(Course.longitude) - radians(%(longitude)s))
                     + sin(radians(%(latitude)s)) * sin(radians(Course.latitude)))) AS distance
                     FROM Course
