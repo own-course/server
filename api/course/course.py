@@ -4,10 +4,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.recommend import recommend_poi
 import json
-
 from util.utils import codeToCategory, hashtagToArray, descriptionToArray
 
 course = CourseDto.api
+_course_id = CourseDto.course_id
 _course = CourseDto.course
 _course_recommend = CourseDto.course_recommend
 _course_replacement = CourseDto.course_replacement
@@ -326,7 +326,7 @@ class SaveCourseAPI(Resource):
         self.course_info = args['course_info']
         self.user_id = get_jwt_identity()
 
-    @course.response(200, 'Success')
+    @course.response(200, 'Success', _course_id)
     @course.expect(_course)
     @course.doc(security='apiKey')
     def post(self):
@@ -355,56 +355,43 @@ class SaveCourseAPI(Resource):
         """
         course_id = database.execute_one(sql)
         for course in self.course_info:
-            # if course['avg_cost'] is None and course['popular_menu'] is None:
-            #     value = {
-            #         'course_id': course_id['id'],
-            #         'place_id': course['place_id'],
-            #         'place_order': course['place_order'],
-            #         'avg_cost': course['avg_cost'],
-            #     }
-            #     sql = """
-            #         INSERT INTO Course_Place (course_id, place_id, place_order)
-            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s)
-            #     """
-            # elif course['avg_cost'] is None:
-            #     value = {
-            #         'course_id': course_id['id'],
-            #         'place_id': course['place_id'],
-            #         'place_order': course['place_order'],
-            #         'popular_menu': course['popular_menu'],
-            #     }
-            #     sql = """
-            #         INSERT INTO Course_Place (course_id, place_id, place_order, popular_menu)
-            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(popular_menu)s)
-            #     """
-            # elif course['popular_menu'] is None:
-            #     value = {
-            #         'course_id': course_id['id'],
-            #         'place_id': course['place_id'],
-            #         'place_order': course['place_order'],
-            #         'avg_cost': course['avg_cost'],
-            #     }
-            #     sql = """
-            #         INSERT INTO Course_Place (course_id, place_id, place_order, avg_cost)
-            #         VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(avg_cost)s)
-            #     """
-            # else:
             value = {
                 'course_id': course_id['id'],
                 'place_id': course['place_id'],
                 'place_order': course['place_order'],
-                'avg_cost': course['avg_cost'],
-                'popular_menu': course['popular_menu']
+                'user_id': self.user_id
             }
             sql = """
+                SELECT AVG(CAST(price as FLOAT)) as avg_price FROM Place_Menu
+                WHERE place_id = %(place_id)s
+            """
+            row = database.execute_one(sql, value)
+            if row['avg_price'] != -1.0 and row['avg_price'] is not None:
+                course['avg_price'] = int(round(row['avg_price'], -3))
+            else:
+                course['avg_price'] = 0
+
+            sql = """
+                SELECT menu_name as representative_menu FROM Place_Menu
+                WHERE place_id = %(place_id)s AND representative = 1
+            """
+            row = database.execute_one(sql, value)
+            if row is None:
+                course['representative_menu'] = "정보없음"
+            else:
+                course['representative_menu'] = row['representative_menu']
+            value['avg_cost'] = course['avg_price']
+            value['representative_menu'] = course['representative_menu']
+
+            sql = """
                 INSERT INTO Course_Place (course_id, place_id, place_order, avg_cost, popular_menu)
-                VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(avg_cost)s, %(popular_menu)s)
+                VALUES (%(course_id)s, %(place_id)s, %(place_order)s, %(avg_cost)s, %(representative_menu)s)
             """
             database.execute(sql, value)
             database.commit()
         database.close()
 
-        return 200
+        return {'course_id': course_id['id']}, 200
 
 
 @course.route('/list')

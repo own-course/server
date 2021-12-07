@@ -153,11 +153,12 @@ class ReviewDto:
 
 class CourseDto:
     api = Namespace('Course', description='코스')
+    course_id = api.model('course_id', {
+        'course_id': fields.Integer
+    })
     course_info = api.model('course_info', {
         'place_id': fields.Integer,
-        'place_order': fields.Integer,
-        'avg_cost': fields.Integer,
-        'popular_menu': fields.String
+        'place_order': fields.Integer
     })
     course_recommend = api.model('course_recommend', {
         'id': fields.Integer,
