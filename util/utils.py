@@ -243,11 +243,7 @@ def hashtagToArray(hashtag):
         hashtag = hashtag.replace(removeChar, "")
     hashtags = hashtag.split(',')
 
-    result = []
-    for hashtag in hashtags:
-        result.append(hashtag)
-
-    return result
+    return hashtags
 
 def descriptionToArray(description):
     descriptions = description[2:-2].replace('},{', "|")
@@ -257,7 +253,7 @@ def descriptionToArray(description):
     for description in descriptions:
         result.append(description)
 
-    return result
+    return descriptions
 
 
 def keywordToVector(keyword, vector):
