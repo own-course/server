@@ -249,10 +249,6 @@ def descriptionToArray(description):
     descriptions = description[2:-2].replace('},{', "|")
     descriptions = descriptions.split('|')
 
-    result = []
-    for description in descriptions:
-        result.append(description)
-
     return descriptions
 
 
