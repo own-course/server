@@ -238,8 +238,10 @@ def codeToCategory(category):
 
 
 def hashtagToArray(hashtag):
-    hashtags = hashtag[2:-2].replace('", "', "|")
-    hashtags = hashtags.split('|')
+    char = "[\" ]"
+    for removeChar in char:
+        hashtag = hashtag.replace(removeChar, "")
+    hashtags = hashtag.split(',')
 
     result = []
     for hashtag in hashtags:
