@@ -133,8 +133,7 @@ class RecommendCourseAPI(Resource):
                 else:
                     item['representative_menu'] = row['representative_menu']
 
-                del item['taste'], item['service'], item['cost'], item['tsc_score']
-                del item['distance'], item['latitude'], item['longitude']
+                del item['taste'], item['service'], item['cost'], item['tsc_score'], item['distance']
 
                 sql = """
                     SELECT enabled FROM Place_User
@@ -258,8 +257,7 @@ class RecommendCourseAPI(Resource):
             else:
                 place['representative_menu'] = row['representative_menu']
 
-            del place['taste'], place['service'], place['cost'], place['tsc_score']
-            del place['distance'], place['latitude'], place['longitude']
+            del place['taste'], place['service'], place['cost'], place['tsc_score'], place['distance']
 
             sql = """
                 SELECT enabled FROM Place_User

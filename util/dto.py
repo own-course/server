@@ -164,6 +164,8 @@ class CourseDto:
         'id': fields.Integer,
         'name': fields.String,
         'categories': fields.Raw(example=["FD1"]),
+        'latitude': fields.Float,
+        'longitude': fields.Float,
         'large_categories': fields.Raw(example=["FD"]),
         'avg_price': fields.Integer,
         'representative_menu': fields.String,
