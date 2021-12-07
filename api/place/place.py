@@ -1,8 +1,9 @@
-from flask import make_response
+from flask import make_response, request
 from flask_restx import Resource
 from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
+from util.upload import upload_file
 from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray
 from util.recommend import recommend_poi
 
@@ -470,3 +471,22 @@ class PlaceLikeAPI(Resource):
             database.close()
 
             return {"like": like}, 200
+
+
+@place.route('/img')
+class uploadPlaceImgAPI(Resource):
+    @jwt_required()
+    def __init__(self, api=None, *args, **kwargs):
+        super().__init__(api, args, kwargs)
+
+        self.user_id = get_jwt_identity()
+
+    @place.doc(security='apiKey')
+    @place.response(200, 'Success')
+    def post(self):
+        """장소 사진 등록 (임시)"""
+        result = upload_file(request.files)
+        if result['message'] == 'Success':
+            return {'filename': result['filename'][:-1]}, 200
+        else:
+            return {'message': result['message']}, 400
