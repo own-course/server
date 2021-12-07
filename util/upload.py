@@ -14,6 +14,7 @@ def allowed_file(filename):
 def upload_file(files):
     if 'file' not in files:
         return {'message': 'No file part'}
+    basedir = os.path.abspath(os.path.dirname(__file__))
     files = files.getlist('file')
     filenames = ""
     for file in files:
@@ -21,7 +22,7 @@ def upload_file(files):
             return {'message': 'No image selected for uploading'}
         if file and allowed_file(file.filename):
             filename = secure_filename(time.strftime('%y%m%d%H%M%S') + '_' + file.filename)
-            file.save(os.path.join(config['FILE']['UPLOAD_FOLDER'], filename))
+            file.save(os.path.join(basedir, config['FILE']['UPLOAD_FOLDER'], filename))
         else:
             return {'message': 'Allowed image types are png, jpg, jpeg and gif'}
         filenames = filenames + '"' + filename + '",'
