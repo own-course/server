@@ -183,6 +183,7 @@ class GetPlaceReviewImgAPI(Resource):
                 WHERE place_id = %(place_id)s
             """
             rows = database.execute_all(sql, value)
+            root_url = "http://owncourse.seongbum.com/static/uploads/"
             for row in rows:
                 review_num += 1
                 if row['review_img'] is not None:
@@ -193,7 +194,7 @@ class GetPlaceReviewImgAPI(Resource):
                         r = {
                             'review_id': row['id'],
                             'rating': row['rating'],
-                            'review_img': img
+                            'review_img': root_url + img
                         }
                         result.append(r)
         database.close()

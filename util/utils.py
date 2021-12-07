@@ -1,3 +1,6 @@
+import random
+
+
 def categoryToCode(category):
     categories = category[2:-2].replace('","', "|")
     categories = categories.split('|')
@@ -285,3 +288,34 @@ def keywordToVector(keyword, vector):
     vector[idx] = 1
 
     return vector
+
+
+def imgSelect(category):
+    if type(category) == str:
+        category = category[2:4]
+    else:
+        category = category[0][0:2]
+
+    root_url = "http://owncourse.seongbum.com/static/uploads/"
+    url = ""
+
+    if category == "FD":
+        num = random.randint(1, 4)
+        url = root_url + "FD" + str(num) + ".jpeg"
+    elif category == "CE":
+        num = random.randint(1, 4)
+        url = root_url + "CE" + str(num) + ".jpeg"
+    elif category == "AT":
+        num = random.randint(1, 6)
+        url = root_url + "AT" + str(num) + ".jpeg"
+    elif category == "CT":
+        num = random.randint(1, 2)
+        url = root_url + "CT" + str(num) + ".jpeg"
+    elif category == "AC":
+        num = random.randint(1, 3)
+        url = root_url + "AC" + str(num) + ".jpeg"
+    elif category == "UE":
+        num = random.randint(1, 1)
+        url = root_url + "UE" + str(num) + ".jpeg"
+
+    return url

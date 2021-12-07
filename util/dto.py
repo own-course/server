@@ -67,7 +67,8 @@ class PlaceDto:
         'name': fields.String,
         'categories': fields.Raw(example=["FD1"]),
         'large_categories': fields.Raw(example=["FD"]),
-        'like': fields.Boolean
+        'like': fields.Boolean,
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     place_by_category = api.model('place_by_category', {
         'id': fields.Integer,
@@ -78,7 +79,8 @@ class PlaceDto:
         'distance': fields.Float,
         'review_rating': fields.Float,
         'review_num': fields.Integer,
-        'like': fields.Boolean
+        'like': fields.Boolean,
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     place_description = api.model('place_description', {
         'source': fields.String(example="카카오맵"),
@@ -169,7 +171,8 @@ class CourseDto:
         'large_categories': fields.Raw(example=["FD"]),
         'avg_price': fields.Integer,
         'representative_menu': fields.String,
-        'like': fields.Boolean
+        'like': fields.Boolean,
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     course_replacement = api.inherit('course_replacement', course_recommend, {
         'review_rating': fields.Float(example=4.5),
@@ -191,7 +194,8 @@ class CourseDto:
         'course_name': fields.String,
         'cost': fields.Integer,
         'hours': fields.Float,
-        'address': fields.String
+        'address': fields.String,
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     course_place_description = api.model('course_place_description', {
         'source': fields.String(example="카카오맵"),
@@ -213,7 +217,8 @@ class CourseDto:
         'descriptions': fields.List(fields.Nested(course_place_description)),
         'like': fields.Boolean,
         'review_rating': fields.Float,
-        'review_num': fields.Integer
+        'review_num': fields.Integer,
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     course_error = api.model('course_error', {
         'message': fields.String

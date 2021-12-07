@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.recommend import recommend_poi
 import json
-from util.utils import codeToCategory, hashtagToArray, descriptionToArray
+from util.utils import codeToCategory, hashtagToArray, descriptionToArray, imgSelect
 
 course = CourseDto.api
 _course_id = CourseDto.course_id
@@ -147,6 +147,7 @@ class RecommendCourseAPI(Resource):
                         item['like'] = False
                     else:
                         item['like'] = True
+                item['img_url'] = imgSelect(item['categories'])
 
         database.close()
 
@@ -232,7 +233,7 @@ class RecommendCourseAPI(Resource):
             places.append(category_poi[large_category][i])
 
         for place in places:
-
+            place['img_url'] = imgSelect(place['categories'])
             value = {
                 'place_id': place['id'],
                 'user_id': self.user_id
@@ -395,10 +396,10 @@ class SaveCourseAPI(Resource):
 @course.route('/list')
 @course.doc(params={
     'sort': {'description': 'location, cost or hour', 'in': 'query', 'type': 'string'},
-    'longitude':
-        {'description': 'longitude', 'in': 'query', 'type': 'float'},
     'latitude':
         {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'longitude':
+        {'description': 'longitude', 'in': 'query', 'type': 'float'},
     'search':
         {'description': 'search by course name or address (검색어 입력시 사용)', 'in': 'query', 'type': 'string'}
 })
@@ -477,6 +478,8 @@ class GetCourseListAPI(Resource):
                     ORDER BY hours
                 """
         rows = database.execute_all(sql, value)
+        for row in rows:
+            row['img_url'] = imgSelect(["AT"])
         database.close()
 
         return rows, 200
@@ -548,7 +551,7 @@ class SaveCourseDetailAPI(Resource):
                 review_row = database.execute_one(sql, {'place_id': row['place_id']})
                 row['review_rating'] = review_row['rating']
                 row['review_num'] = review_row['review_num']
-
+            row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
             if row['hashtags'] is not None:
                 row['hashtags'] = hashtagToArray(row['hashtags'])
@@ -572,8 +575,8 @@ class SaveCourseDetailAPI(Resource):
 @course.route('/recommend/home')
 @course.response(200, 'Success', [_course_list])
 @course.doc(params={
-    'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'},
-    'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'}
+    'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'longitude': {'description': 'longitude', 'in': 'query', 'type': 'float'}
 })
 class CourseRecommendHomeAPI(Resource):
     @jwt_required()
@@ -647,6 +650,7 @@ class CourseRecommendHomeAPI(Resource):
                     rows.append(add_rows[i])
         for item in rows:
             del item['distance']
+            item['img_url'] = imgSelect(["AT"])
 
         database.close()
 

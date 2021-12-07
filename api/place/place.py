@@ -4,7 +4,7 @@ from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.upload import upload_file
-from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray
+from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray, imgSelect
 from util.recommend import recommend_poi
 
 place = PlaceDto.api
@@ -66,6 +66,7 @@ class RecommendPlaceAPI(Resource):
                     item['like'] = False
                 else:
                     item['like'] = True
+            item['img_url'] = imgSelect(item['categories'])
             place.append(item)
 
         database.close()
@@ -293,6 +294,7 @@ class PlacesByCategoryAPI(Resource):
                 else:
                     row['like'] = True
         for row in rows:
+            row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
             if row['hashtags'] is not None:
                 row['hashtags'] = hashtagToArray(row['hashtags'])
