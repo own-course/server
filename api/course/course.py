@@ -556,7 +556,7 @@ class SaveCourseDetailAPI(Resource):
             if row['hashtags'] is not None:
                 row['hashtags'] = hashtagToArray(row['hashtags'])
             row['categories'] = categories
-            if row['descriptions'] is not None:
+            if row['descriptions'] != "[]":
                 description = []
                 row['descriptions'] = descriptionToArray(row['descriptions'])
                 for item in row['descriptions']:
@@ -566,6 +566,8 @@ class SaveCourseDetailAPI(Resource):
                     list['description'] = items[1]
                     description.append(list)
                 row['descriptions'] = description
+            else:
+                row['descriptions'] = []
 
         database.close()
 
