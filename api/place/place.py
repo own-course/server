@@ -305,35 +305,6 @@ class PlacesByCategoryAPI(Resource):
             return rows, 200
 
         elif self.sort == "popular":
-            # if category == 'ALL':
-            #     sql = """
-            #             SELECT Place.id, Place.name, Place.categories, Place.hashtags,
-            #             AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num,
-            #             (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
-            #             * cos(radians(Place.longitude) - radians(%(longitude)s))
-            #             + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
-            #             FROM Place JOIN Review
-            #             WHERE Place.enabled = 1 AND Review.place_id = Place.id
-            #             GROUP BY id
-            #             ORDER BY distance <= 3, rating desc, review_num desc
-            #             LIMIT 0,30
-            #     """
-            # else:
-            #     sql = """
-            #             SELECT Place.id, Place.name, Place.categories, Place.hashtags,
-            #             AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num,
-            #             (6371 * acos(cos(radians(%(latitude)s)) * cos(radians(Place.latitude))
-            #             * cos(radians(Place.longitude) - radians(%(longitude)s))
-            #             + sin(radians(%(latitude)s)) * sin(radians(Place.latitude)))) AS distance
-            #             FROM Place JOIN Review
-            #             WHERE Place.enabled = 1 AND Review.place_id = Place.id
-            #             AND Place.categories REGEXP %(category)s
-            #             GROUP BY id
-            #             ORDER BY distance <= 3, rating desc, review_num desc
-            #             LIMIT 0,30
-            #     """
-            # rows = database.execute_all(sql, value)
-
             result = sorted(rows, key=lambda x: str(x['review_rating'])[:3], reverse=True)
             database.close()
 

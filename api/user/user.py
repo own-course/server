@@ -230,10 +230,10 @@ class GetLikedPlaceAPI(Resource):
         {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'},
     'sort':
         {'description': 'location, hour or popular', 'in': 'query', 'type': 'string'},
-    'longitude':
-        {'description': 'longitude', 'in': 'query', 'type': 'float'},
     'latitude':
-        {'description': 'latitude', 'in': 'query', 'type': 'float'}
+        {'description': 'latitude', 'in': 'query', 'type': 'float'},
+    'longitude':
+        {'description': 'longitude', 'in': 'query', 'type': 'float'}
 })
 class GetReviewAPI(Resource):
     @jwt_required()
