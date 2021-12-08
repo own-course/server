@@ -48,7 +48,8 @@ class UserDto:
         'review_id': fields.Integer,
         'user_id': fields.Integer,
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
-        'user_name': fields.String
+        'user_name': fields.String,
+        'profile_img': fields.String(example="http://owncourse.seongbum.com/static/uploads/profileIMG.jpeg")
     })
     user_TSC = api.model('user_TSC', {
         'TSC_answer': fields.String(example='123241534253')

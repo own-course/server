@@ -349,12 +349,15 @@ class GetNotificationAPI(Resource):
         rows = database.execute_all(sql, {'user_id': self.user_id})
         for row in rows:
             sql = """
-                SELECT nickname FROM Profile
+                SELECT nickname, profile_img FROM Profile
                 WHERE user_id = %(user_id)s
             """
             user = database.execute_one(sql, {'user_id': row['user_id']})
             row['user_name'] = user['nickname']
             row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+            root_url = "http://owncourse.seongbum.com/static/uploads/"
+            if row['profile_img'] is not None:
+                row['profile_img'] = root_url + row['profile_img']
 
         database.close()
 
