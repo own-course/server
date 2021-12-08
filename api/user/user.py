@@ -5,7 +5,7 @@ from util.dto import UserDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.upload import upload_file
-from util.utils import keywordToVector, codeToCategory, hashtagToArray
+from util.utils import keywordToVector, codeToCategory, hashtagToArray, imgSelect
 
 user = UserDto.api
 _profile = UserDto.profile
@@ -59,6 +59,7 @@ class ProfileAPI(Resource):
         value = {
             'user_id': self.user_id
         }
+        root_url = "http://owncourse.seongbum.com/static/uploads/"
         sql = """
             SELECT Profile.user_id, Profile.nickname, Profile.tsc_type, Profile.profile_img,
             User.platform_type, User.email
@@ -72,6 +73,8 @@ class ProfileAPI(Resource):
         """
         review_num = database.execute_one(sql, value)
         row['review_num'] = review_num['review_num']
+        if row['profile_img'] is not None:
+            row['profile_img'] = root_url + row['profile_img']
         database.close()
 
         return row, 200
@@ -209,6 +212,7 @@ class GetLikedPlaceAPI(Resource):
                 row['review_num'] = 0
             row['review_rating'] = review['rating']
             row['review_num'] = review['review_num']
+            row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
             if row['hashtags'] is not None:
                 row['hashtags'] = hashtagToArray(row['hashtags'])
@@ -263,7 +267,7 @@ class GetReviewAPI(Resource):
             'start': page * limit,
             'limit': limit
         }
-
+        root_url = "http://owncourse.seongbum.com/static/uploads/"
         if self.sort == 'location':
             sql = """
                 SELECT Review.id AS review_id, Place.id AS place_id, Place.name, Review.rating, Review.content,
@@ -303,7 +307,14 @@ class GetReviewAPI(Resource):
         rows = database.execute_all(sql, value)
         for row in rows:
             if row['review_img'] is not None:
-                row['review_img'] = row['review_img'].split('"')[1]
+                imgs = row['review_img'][1:-1]
+                imgs = imgs.split('","')
+                review_img = []
+                for img in imgs:
+                    review_img.append(root_url + img)
+                row['review_img'] = review_img
+            else:
+                row['review_img'] = []
             row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
         sql = """
             SELECT COUNT(id) AS review_num FROM Review

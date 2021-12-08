@@ -359,7 +359,7 @@ class PlaceInfoAPI(Resource):
         """장소 상세정보"""
         database = Database()
         sql = """
-            SELECT id, name, address, road_address, hashtags,
+            SELECT id, name, address, road_address, categories, hashtags,
             phone, longitude, latitude, descriptions
             FROM Place
             WHERE id = %(place_id)s AND enabled = 1
@@ -401,6 +401,9 @@ class PlaceInfoAPI(Resource):
                     row['like'] = False
                 else:
                     row['like'] = True
+            row['img_url'] = imgSelect(row['categories'])
+            categories = codeToCategory(row['categories'])
+            row['categories'] = categories
             if row['hashtags'] is not None:
                 row['hashtags'] = hashtagToArray(row['hashtags'])
             if row['descriptions'] != "[]":

@@ -97,6 +97,7 @@ class PlaceReviewAPI(Resource):
                 'start': page * limit,
                 'limit': limit
             }
+            root_url = "http://owncourse.seongbum.com/static/uploads/"
             sql = """
                 SELECT id, user_id, place_id, rating, content, review_img, likes as like_num, source, created_at 
                 FROM Review WHERE place_id = %(place_id)s
@@ -106,6 +107,15 @@ class PlaceReviewAPI(Resource):
             rows = database.execute_all(sql, value)
             for row in rows:
                 row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+                if row['review_img'] is not None:
+                    imgs = row['review_img'][1:-1]
+                    imgs = imgs.split('","')
+                    review_img = []
+                    for img in imgs:
+                        review_img.append(root_url + img)
+                    row['review_img'] = review_img
+                else:
+                    row['review_img'] = []
                 if row['source'] != 'owncourse':
                     if row['source'] == 'kakao_map':
                         row['user_name'] = '카카오맵 사용자'
@@ -119,7 +129,10 @@ class PlaceReviewAPI(Resource):
                     """
                     profile = database.execute_one(sql, {'user_id': row['user_id']})
                     row['user_name'] = profile['nickname']
-                    row['profile_img'] = profile['profile_img']
+                    if profile['profile_img'] is not None:
+                        row['profile_img'] = root_url + profile['profile_img']
+                    else:
+                        row['profile_img'] = None
                 sql = """
                     SELECT enabled FROM Review_User
                     WHERE review_id = %(review_id)s AND user_id = %(user_id)s
@@ -194,7 +207,7 @@ class GetPlaceReviewImgAPI(Resource):
                         r = {
                             'review_id': row['id'],
                             'rating': row['rating'],
-                            'review_img': root_url + img
+                            'review_img': [root_url + img]
                         }
                         result.append(r)
         database.close()
@@ -262,17 +275,22 @@ class ReviewDetailAPI(Resource):
             SELECT * FROM Review WHERE id = %(review_id)s
         """
         row = database.execute_one(sql, {'review_id': review_id})
-        # sql = """
-        #     SELECT Review.*, Profile.nickname AS user_name, Profile.profile_img
-        #     FROM Review JOIN Profile
-        #     WHERE Review.id = %(review_id)s AND Review.user_id = Profile.user_id
-        # """
+        root_url = "http://owncourse.seongbum.com/static/uploads/"
         if row is None:
             database.close()
 
             return {'message': f'Review ID \'{review_id}\' does not exist.'}, 400
         else:
             row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+            if row['review_img'] is not None:
+                imgs = row['review_img'][1:-1]
+                imgs = imgs.split('","')
+                review_img = []
+                for img in imgs:
+                    review_img.append(root_url + img)
+                row['review_img'] = review_img
+            else:
+                row['review_img'] = []
             if row['source'] != 'owncourse':
                 if row['source'] == 'kakao_map':
                     row['user_name'] = '카카오맵 사용자'
@@ -286,7 +304,10 @@ class ReviewDetailAPI(Resource):
                 """
                 profile = database.execute_one(sql, {'user_id': row['user_id']})
                 row['user_name'] = profile['nickname']
-                row['profile_img'] = profile['profile_img']
+                if profile['profile_img'] is not None:
+                    row['profile_img'] = root_url + profile['profile_img']
+                else:
+                    row['profile_img'] = None
             database.close()
 
             return row, 200

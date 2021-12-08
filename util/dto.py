@@ -10,7 +10,7 @@ class UserDto:
         'user_id': fields.Integer,
         'nickname': fields.String,
         'tsc_type': fields.String,
-        'profile_img': fields.String,
+        'profile_img': fields.String(example="http://owncourse.seongbum.com/static/uploads/profileIMG.jpeg"),
         'platform_type': fields.String(example='Email'),
         'email': fields.String,
         'review_num': fields.Integer
@@ -25,7 +25,8 @@ class UserDto:
         'categories': fields.Raw(example=["음료전문", "디저트전문"]),
         'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'review_rating': fields.Float,
-        'review_num': fields.Integer
+        'review_num': fields.Integer,
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     user_review_detail = api.model('user_review_detail', {
         'review_id': fields.Integer,
@@ -33,7 +34,7 @@ class UserDto:
         'name': fields.String,
         'rating': fields.Float,
         'content': fields.String,
-        'review_img': fields.String,
+        'review_img': fields.String(example=["http://owncourse.seongbum.com/static/uploads/reviewIMG.jpeg"]),
         'likes': fields.Integer,
         'source': fields.String(example='owncourse'),
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
@@ -91,6 +92,7 @@ class PlaceDto:
         'name': fields.String,
         'address': fields.String,
         'road_address': fields.String,
+        'categories': fields.Raw(example=["음료전문"]),
         'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'phone': fields.String,
         'longitude': fields.Float,
@@ -98,7 +100,8 @@ class PlaceDto:
         'descriptions': fields.List(fields.Nested(place_description)),
         'review_rating': fields.Float,
         'review_num': fields.Integer,
-        'like': fields.Boolean
+        'like': fields.Boolean,
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     place_like = api.model('place_like', {
         'like': fields.Boolean
@@ -123,18 +126,18 @@ class ReviewDto:
         'place_id': fields.Integer,
         'rating': fields.Float,
         'content': fields.String,
-        'review_img': fields.String,
+        'review_img': fields.Raw(example=["http://owncourse.seongbum.com/static/uploads/reviewIMG.jpeg"]),
         'like_num': fields.Integer,
         'source': fields.String,
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
         'user_name': fields.String,
-        'profile_img': fields.String,
+        'profile_img': fields.String(example="http://owncourse.seongbum.com/static/uploads/profileIMG.jpeg"),
         'like': fields.Boolean
     })
     review_img_detail = api.model('review_img_detail', {
         'review_id': fields.Integer,
         'rating': fields.Float,
-        'review_img': fields.String
+        'review_img': fields.Raw(example=["http://owncourse.seongbum.com/static/uploads/reviewIMG.jpeg"])
     })
     review_error = api.model('review_error', {
         'message': fields.String
