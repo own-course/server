@@ -166,6 +166,10 @@ class CourseDto:
         'place_id': fields.Integer,
         'place_order': fields.Integer
     })
+    course_place_description = api.model('course_place_description', {
+        'source': fields.String(example="카카오맵"),
+        'description': fields.String
+    })
     course_recommend = api.model('course_recommend', {
         'id': fields.Integer,
         'name': fields.String,
@@ -176,7 +180,12 @@ class CourseDto:
         'avg_price': fields.Integer,
         'representative_menu': fields.String,
         'like': fields.Boolean,
-        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
+        'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg"),
+        'phone': fields.String,
+        'hashtags': fields.Raw(example=["조용한", "데이트"]),
+        'descriptions': fields.List(fields.Nested(course_place_description)),
+        'review_rating': fields.Float(example=4.5),
+        'review_num': fields.Integer(example=10)
     })
     course_replacement = api.inherit('course_replacement', course_recommend, {
         'review_rating': fields.Float(example=4.5),
@@ -200,10 +209,6 @@ class CourseDto:
         'hours': fields.Float,
         'address': fields.String,
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
-    })
-    course_place_description = api.model('course_place_description', {
-        'source': fields.String(example="카카오맵"),
-        'description': fields.String
     })
     course_detail = api.model('course_detail', {
         'place_id': fields.Integer,

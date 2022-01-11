@@ -149,6 +149,54 @@ class RecommendCourseAPI(Resource):
                         item['like'] = True
                 item['img_url'] = imgSelect(item['categories'])
 
+                sql = """
+                    SELECT hashtags, phone, descriptions FROM Place
+                    WHERE id = %(place_id)s
+                """
+                row = database.execute_one(sql, value)
+                if row['phone'] is not None:
+                    item['phone'] = row['phone']
+                else:
+                    item['phone'] = ""
+                if row['hashtags'] is not None:
+                    row['hashtags'] = hashtagToArray(row['hashtags'])
+                    item['hashtags'] = row['hashtags']
+                else:
+                    item['hashtags'] = []
+                if row['descriptions'] != "[]":
+                    description = []
+                    row['descriptions'] = descriptionToArray(row['descriptions'])
+                    for des in row['descriptions']:
+                        des_list = {}
+                        items = des.split(',"description":')
+                        des_list['source'] = items[0][9:]
+                        des_list['description'] = items[1]
+                        description.append(des_list)
+                    row['descriptions'] = description
+                else:
+                    row['descriptions'] = []
+                item['descriptions'] = row['descriptions']
+                sql = """
+                    SELECT * FROM Review 
+                    WHERE place_id = %(place_id)s
+                """
+                review_row = database.execute_one(sql, value)
+                if review_row is None:
+                    row['review_rating'] = 0
+                    row['review_num'] = 0
+
+                else:
+                    sql = """
+                        SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
+                        FROM Review
+                        WHERE place_id = %(place_id)s
+                    """
+                    review_row = database.execute_one(sql, value)
+                    row['review_rating'] = review_row['rating']
+                    row['review_num'] = review_row['review_num']
+                item['review_rating'] = row['review_rating']
+                item['review_num'] = row['review_num']
+
         database.close()
 
         return courses, 200
