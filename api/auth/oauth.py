@@ -1,21 +1,16 @@
-from flask_restx import Namespace, Resource, fields
-from api.auth.auth import get_token, auth_response_with_refresh_token, auth_email_response
+from flask_restx import Resource
+from util.dto import OauthDto, AuthDto
+from api.auth.auth import get_token
 from database.database import Database
 import requests
 import configparser
 
-oauth = Namespace('OAuth', description='카카오, 네이버, 구글 로그인')
-
-model_kakao_auth = oauth.model('model_kakao_auth', {
-    'code': fields.String(description='Kakao authorization code')
-})
-model_naver_auth = oauth.model('model_naver_auth', {
-    'code': fields.String(description='Naver authorization code'),
-    'state': fields.String(description='Naver state')
-})
-model_google_auth = oauth.model('model_google_auth', {
-    'code': fields.String(description='Google authorization code')
-})
+oauth = OauthDto.api
+_model_kakao_auth = OauthDto.model_kakao_auth
+_model_naver_auth = OauthDto.model_naver_auth
+_model_google_auth = OauthDto.model_google_auth
+_auth_response_with_refresh_token = AuthDto.auth_response_with_refresh_token
+_auth_email_response = AuthDto.auth_email_response
 
 config = configparser.ConfigParser()
 config.read_file(open('config/config.ini'))
@@ -23,9 +18,10 @@ config.read_file(open('config/config.ini'))
 host = config['DEFAULT']['HOST']
 port = config['DEFAULT']['PORT']
 
+
 @oauth.route('/kakao')
-@oauth.response(200, 'Success', auth_response_with_refresh_token)
-@oauth.response(400, 'Bad Request', auth_email_response)
+@oauth.response(200, 'Success', _auth_response_with_refresh_token)
+@oauth.response(400, 'Bad Request', _auth_email_response)
 class KakaoLoginAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -36,7 +32,7 @@ class KakaoLoginAPI(Resource):
 
         self.code = args['code']
 
-    @oauth.expect(model_kakao_auth)
+    @oauth.expect(_model_kakao_auth)
     def post(self):
         """Kakao 로그인"""
         database = Database()
@@ -92,9 +88,10 @@ class KakaoLoginAPI(Resource):
 
         return get_token(user), 200
 
+
 @oauth.route('/naver')
-@oauth.response(200, 'Success', auth_response_with_refresh_token)
-@oauth.response(400, 'Bad Request', auth_email_response)
+@oauth.response(200, 'Success', _auth_response_with_refresh_token)
+@oauth.response(400, 'Bad Request', _auth_email_response)
 class NaverLoginAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -107,7 +104,7 @@ class NaverLoginAPI(Resource):
         self.code = args['code']
         self.state = args['state']
 
-    @oauth.expect(model_naver_auth)
+    @oauth.expect(_model_naver_auth)
     def post(self):
         """Naver 로그인"""
         database = Database()
@@ -146,9 +143,10 @@ class NaverLoginAPI(Resource):
 
         return get_token(user), 200
 
+
 @oauth.route('/google')
-@oauth.response(200, 'Success', auth_response_with_refresh_token)
-@oauth.response(400, 'Bad Request', auth_email_response)
+@oauth.response(200, 'Success', _auth_response_with_refresh_token)
+@oauth.response(400, 'Bad Request', _auth_email_response)
 class GoogleLoginAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -159,7 +157,7 @@ class GoogleLoginAPI(Resource):
 
         self.code = args['code']
 
-    @oauth.expect(model_google_auth)
+    @oauth.expect(_model_google_auth)
     def post(self):
         """Google 로그인"""
         database = Database()
@@ -213,6 +211,7 @@ class GoogleLoginAPI(Resource):
 
         return get_token(user), 200
 
+
 def get_naver_token(state, code):
     token_json = requests.post(
         url="https://nid.naver.com/oauth2.0/token",
@@ -226,6 +225,7 @@ def get_naver_token(state, code):
     ).json()
 
     return token_json
+
 
 def get_naver_profile(access_token, token_type='Bearer'):
     profile_info = requests.get(

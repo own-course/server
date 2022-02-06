@@ -14,13 +14,28 @@ class AuthDto:
         'message': fields.String
     })
     auth_email_response_with_code = api.inherit('auth_email_response_with_code', auth_email_response, {
-        'code': fields.Integer
+        'code': fields.Integer(example=123456)
     })
     auth_response_with_token = api.model('auth_response_with_token', {
         'access_token': fields.String
     })
     auth_response_with_refresh_token = api.inherit('auth_response_with_refresh_token', auth_response_with_token, {
         'refresh_token': fields.String
+    })
+
+
+class OauthDto:
+    api = Namespace('OAuth', description='카카오, 네이버, 구글 로그인')
+
+    model_kakao_auth = api.model('model_kakao_auth', {
+        'code': fields.String(description='Kakao authorization code')
+    })
+    model_naver_auth = api.model('model_naver_auth', {
+        'code': fields.String(description='Naver authorization code'),
+        'state': fields.String(description='Naver state')
+    })
+    model_google_auth = api.model('model_google_auth', {
+        'code': fields.String(description='Google authorization code')
     })
 
 
