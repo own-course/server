@@ -7,46 +7,46 @@ class UserDto:
         'nickname': fields.String
     })
     profile_info = api.model('profile_info', {
-        'user_id': fields.Integer,
+        'user_id': fields.Integer(example=1),
         'nickname': fields.String,
         'tsc_type': fields.String,
         'profile_img': fields.String(example="http://owncourse.seongbum.com/static/uploads/profileIMG.jpeg"),
         'platform_type': fields.String(example='Email'),
         'email': fields.String,
-        'review_num': fields.Integer
+        'review_num': fields.Integer(example=1)
     })
     keyword = api.model('keyword', {
         'keyword': fields.Raw(example=["세련", "독특"])
     })
     liked_places = api.model('liked_places', {
-        'id': fields.Integer,
+        'id': fields.Integer(example=1),
         'name': fields.String,
         'address': fields.String,
         'categories': fields.Raw(example=["음료전문", "디저트전문"]),
         'hashtags': fields.Raw(example=["조용한", "데이트"]),
-        'review_rating': fields.Float,
-        'review_num': fields.Integer,
+        'review_rating': fields.Float(example=4.5),
+        'review_num': fields.Integer(example=1),
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     user_review_detail = api.model('user_review_detail', {
-        'review_id': fields.Integer,
-        'place_id': fields.Integer,
+        'review_id': fields.Integer(example=1),
+        'place_id': fields.Integer(example=1),
         'name': fields.String,
-        'rating': fields.Float,
+        'rating': fields.Float(example=4.5),
         'content': fields.String,
         'review_img': fields.String(example=["http://owncourse.seongbum.com/static/uploads/reviewIMG.jpeg"]),
-        'likes': fields.Integer,
+        'likes': fields.Integer(example=1),
         'source': fields.String(example='owncourse'),
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
-        'distance': fields.Float
+        'distance': fields.Float(example=300.5)
     })
     user_review = api.model('user_review', {
-        'review_num': fields.Integer,
+        'review_num': fields.Integer(example=1),
         'result': fields.List(fields.Nested(user_review_detail))
     })
     user_notification = api.model('user_notification', {
-        'review_id': fields.Integer,
-        'user_id': fields.Integer,
+        'review_id': fields.Integer(example=1),
+        'user_id': fields.Integer(example=1),
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
         'user_name': fields.String,
         'profile_img': fields.String(example="http://owncourse.seongbum.com/static/uploads/profileIMG.jpeg")
@@ -65,7 +65,7 @@ class UserDto:
 class PlaceDto:
     api = Namespace('Place', description='장소 API')
     place_recommend = api.model('place_recommend', {
-        'id': fields.Integer,
+        'id': fields.Integer(example=1),
         'name': fields.String,
         'categories': fields.Raw(example=["FD1"]),
         'large_categories': fields.Raw(example=["FD"]),
@@ -73,14 +73,14 @@ class PlaceDto:
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     place_by_category = api.model('place_by_category', {
-        'id': fields.Integer,
+        'id': fields.Integer(example=1),
         'name': fields.String,
         'address': fields.String,
         'categories': fields.Raw(example=["음료전문"]),
         'hashtags': fields.Raw(example=["조용한", "데이트"]),
-        'distance': fields.Float,
-        'review_rating': fields.Float,
-        'review_num': fields.Integer,
+        'distance': fields.Float(example=300.5),
+        'review_rating': fields.Float(example=4.5),
+        'review_num': fields.Integer(example=1),
         'like': fields.Boolean,
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
@@ -89,18 +89,18 @@ class PlaceDto:
         'description': fields.String
     })
     place_detail = api.model('place_detail', {
-        'id': fields.Integer,
+        'id': fields.Integer(example=1),
         'name': fields.String,
         'address': fields.String,
         'road_address': fields.String,
         'categories': fields.Raw(example=["음료전문"]),
         'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'phone': fields.String,
-        'longitude': fields.Float,
-        'latitude': fields.Float,
+        'longitude': fields.Float(example=37.5),
+        'latitude': fields.Float(example=120.7),
         'descriptions': fields.List(fields.Nested(place_description)),
-        'review_rating': fields.Float,
-        'review_num': fields.Integer,
+        'review_rating': fields.Float(example=4.5),
+        'review_num': fields.Integer(example=1),
         'like': fields.Boolean,
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
@@ -115,20 +115,20 @@ class PlaceDto:
 class ReviewDto:
     api = Namespace('Review', description='장소 리뷰')
     review = api.model('review', {
-        'rating': fields.Float(description='Review rating'),
+        'rating': fields.Float(example=4.5, description='Review rating'),
         'content': fields.String(description='Review content')
     })
     review_id = api.model('review_id', {
-        'id': fields.Integer
+        'id': fields.Integer(example=1)
     })
     review_detail = api.model('review_detail', {
-        'id': fields.Integer,
-        'user_id': fields.Integer,
-        'place_id': fields.Integer,
-        'rating': fields.Float,
+        'id': fields.Integer(example=1),
+        'user_id': fields.Integer(example=1),
+        'place_id': fields.Integer(example=1),
+        'rating': fields.Float(example=4.5),
         'content': fields.String,
         'review_img': fields.Raw(example=["http://owncourse.seongbum.com/static/uploads/reviewIMG.jpeg"]),
-        'like_num': fields.Integer,
+        'like_num': fields.Integer(example=1),
         'source': fields.String,
         'created_at': fields.DateTime(example='yyyy-mm-dd hh:mm:ss'),
         'user_name': fields.String,
@@ -136,20 +136,20 @@ class ReviewDto:
         'like': fields.Boolean
     })
     review_img_detail = api.model('review_img_detail', {
-        'review_id': fields.Integer,
-        'rating': fields.Float,
+        'review_id': fields.Integer(example=1),
+        'rating': fields.Float(example=4.5),
         'review_img': fields.Raw(example=["http://owncourse.seongbum.com/static/uploads/reviewIMG.jpeg"])
     })
     review_error = api.model('review_error', {
         'message': fields.String
     })
     review_by_place = api.model('review_by_place', {
-        'review_num': fields.Integer,
+        'review_num': fields.Integer(example=1),
         'result': fields.List(fields.Nested(review_detail))
     })
     review_img = api.model('review_img', {
-        'review_num': fields.Integer,
-        'review_img_num': fields.Integer,
+        'review_num': fields.Integer(example=1),
+        'review_img_num': fields.Integer(example=1),
         'result': fields.List(fields.Nested(review_img_detail))
     })
     review_like = api.model('review_like', {
@@ -160,24 +160,24 @@ class ReviewDto:
 class CourseDto:
     api = Namespace('Course', description='코스')
     course_id = api.model('course_id', {
-        'course_id': fields.Integer
+        'course_id': fields.Integer(example=1)
     })
     course_info = api.model('course_info', {
-        'place_id': fields.Integer,
-        'place_order': fields.Integer
+        'place_id': fields.Integer(example=1),
+        'place_order': fields.Integer(example=1)
     })
     course_place_description = api.model('course_place_description', {
         'source': fields.String(example="카카오맵"),
         'description': fields.String
     })
     course_recommend = api.model('course_recommend', {
-        'id': fields.Integer,
+        'id': fields.Integer(example=1),
         'name': fields.String,
         'categories': fields.Raw(example=["FD1"]),
-        'latitude': fields.Float,
-        'longitude': fields.Float,
+        'latitude': fields.Float(example=37.5),
+        'longitude': fields.Float(example=120.7),
         'large_categories': fields.Raw(example=["FD"]),
-        'avg_price': fields.Integer,
+        'avg_price': fields.Integer(example=20000),
         'representative_menu': fields.String,
         'like': fields.Boolean,
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg"),
@@ -189,31 +189,31 @@ class CourseDto:
     })
     course_replacement = api.inherit('course_replacement', course_recommend, {
         'review_rating': fields.Float(example=4.5),
-        'review_num': fields.Integer,
+        'review_num': fields.Integer(example=1),
         'hashtags': fields.Raw(example=["조용한", "데이트"])
     })
     course = api.model('course', {
         'course_name': fields.String,
-        'place_num': fields.Integer,
-        'cost': fields.Integer,
-        'hours': fields.Float,
+        'place_num': fields.Integer(example=1),
+        'cost': fields.Integer(example=20000),
+        'hours': fields.Float(example=3.5),
         'address': fields.String,
-        'longitude': fields.Float,
-        'latitude': fields.Float,
+        'longitude': fields.Float(example=37.5),
+        'latitude': fields.Float(example=120.7),
         'course_info': fields.List(fields.Nested(course_info), action='append', description='장소 개수 만큼 입력')
     })
     course_list = api.model('course_list', {
-        'id': fields.Integer,
+        'id': fields.Integer(example=1),
         'course_name': fields.String,
-        'cost': fields.Integer,
-        'hours': fields.Float,
+        'cost': fields.Integer(example=20000),
+        'hours': fields.Float(example=3.5),
         'address': fields.String,
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     course_detail = api.model('course_detail', {
-        'place_id': fields.Integer,
-        'place_order': fields.Integer,
-        'avg_cost': fields.Integer,
+        'place_id': fields.Integer(example=1),
+        'place_order': fields.Integer(example=1),
+        'avg_cost': fields.Integer(example=20000),
         'popular_menu': fields.String,
         'name': fields.String,
         'address': fields.String,
@@ -221,12 +221,12 @@ class CourseDto:
         'categories': fields.String(example=["음료전문"]),
         'hashtags': fields.String(example=["조용한", "데이트"]),
         'phone': fields.String,
-        'longitude': fields.Float,
-        'latitude': fields.Float,
+        'longitude': fields.Float(example=37.5),
+        'latitude': fields.Float(example=120.7),
         'descriptions': fields.List(fields.Nested(course_place_description)),
         'like': fields.Boolean,
-        'review_rating': fields.Float,
-        'review_num': fields.Integer,
+        'review_rating': fields.Float(example=4.5),
+        'review_num': fields.Integer(example=1),
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg")
     })
     course_error = api.model('course_error', {
