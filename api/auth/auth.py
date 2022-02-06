@@ -1,4 +1,5 @@
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Resource
+from util.dto import AuthDto
 from flask_mail import Mail, Message
 from flask_jwt_extended import (
     create_access_token, create_refresh_token,
@@ -9,34 +10,20 @@ import bcrypt
 import random
 import configparser
 
-auth = Namespace('Auth', description='이메일 회원가입 및 로그인')
-
-model_auth_email = auth.model('model_auth_email', {
-    'email': fields.String(description='Email'),
-})
-model_email = auth.model('model_email', {
-    'email': fields.String(description='Email'),
-    'password': fields.String(description='비밀번호')
-})
-
-auth_email_response = auth.model('auth_email_response', {
-    'message': fields.String
-})
-auth_email_response_with_code = auth.inherit('auth_email_response_with_code', auth_email_response, {
-    'code': fields.Integer
-})
-auth_response_with_token = auth.model('auth_response_with_token', {
-    'access_token': fields.String
-})
-auth_response_with_refresh_token = auth.inherit('auth_response_with_refresh_token', auth_response_with_token, {
-    'refresh_token': fields.String
-})
+auth = AuthDto.api
+_model_auth_email = AuthDto.model_auth_email
+_model_email = AuthDto.model_email
+_auth_email_response = AuthDto.auth_email_response
+_auth_email_response_with_code = AuthDto.auth_email_response_with_code
+_auth_response_with_token = AuthDto.auth_response_with_token
+_auth_response_with_refresh_token = AuthDto.auth_response_with_refresh_token
 
 config = configparser.ConfigParser()
 config.read_file(open('config/config.ini'))
 
+
 @auth.route('/email')
-@auth.response(200, 'Success', auth_email_response_with_code)
+@auth.response(200, 'Success', _auth_email_response_with_code)
 class EmailAuthAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -48,7 +35,7 @@ class EmailAuthAPI(Resource):
         self.email = args['email']
         self.code = random.randint(100000, 999999)
 
-    @auth.expect(model_auth_email)
+    @auth.expect(_model_auth_email)
     def post(self):
         """이메일 인증코드 전송"""
         msg = Message('OwnCourse 회원가입 인증 메일입니다.',
@@ -61,8 +48,9 @@ class EmailAuthAPI(Resource):
         return {'message': 'Email is sent successfully.',
                 'code': self.code}, 200
 
+
 @auth.route('/signup')
-@auth.response(200, 'Success', auth_response_with_refresh_token)
+@auth.response(200, 'Success', _auth_response_with_refresh_token)
 class SignUpAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -75,7 +63,7 @@ class SignUpAPI(Resource):
         self.email = args['email']
         self.password = bcrypt.hashpw(args['password'].encode("utf-8"), bcrypt.gensalt())
 
-    @auth.expect(model_email)
+    @auth.expect(_model_email)
     def post(self):
         """이메일 회원가입"""
         database = Database()
@@ -104,9 +92,10 @@ class SignUpAPI(Resource):
 
         return get_token(id['id']), 200
 
+
 @auth.route('/signin')
-@auth.response(200, 'Success', auth_response_with_refresh_token)
-@auth.response(400, 'Bad Request', auth_email_response)
+@auth.response(200, 'Success', _auth_response_with_refresh_token)
+@auth.response(400, 'Bad Request', _auth_email_response)
 class SignInAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
@@ -119,7 +108,7 @@ class SignInAPI(Resource):
         self.email = args['email']
         self.password = args['password']
 
-    @auth.expect(model_email)
+    @auth.expect(_model_email)
     def post(self):
         """이메일 로그인"""
         database = Database()
@@ -141,8 +130,9 @@ class SignInAPI(Resource):
         else:
             return {'message': 'User does not exist.'}, 400
 
+
 @auth.route('/token/refresh')
-@auth.response(200, 'Success', auth_response_with_token)
+@auth.response(200, 'Success', _auth_response_with_token)
 @auth.response(401, 'Unauthorized')
 class TokenAPI(Resource):
     def __init__(self, api=None, *args, **kwargs):
@@ -157,6 +147,7 @@ class TokenAPI(Resource):
         resp = {'access_token': access_token}
 
         return resp, 200
+
 
 def get_token(user):
     access_token = create_access_token(identity=user)

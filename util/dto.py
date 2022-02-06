@@ -1,6 +1,29 @@
 from flask_restx import Namespace, fields
 
 
+class AuthDto:
+    api = Namespace('Auth', description='이메일 회원가입 및 로그인')
+    model_auth_email = api.model('model_auth_email', {
+        'email': fields.String(description='Email'),
+    })
+    model_email = api.model('model_email', {
+        'email': fields.String(description='Email'),
+        'password': fields.String(description='비밀번호')
+    })
+    auth_email_response = api.model('auth_email_response', {
+        'message': fields.String
+    })
+    auth_email_response_with_code = api.inherit('auth_email_response_with_code', auth_email_response, {
+        'code': fields.Integer
+    })
+    auth_response_with_token = api.model('auth_response_with_token', {
+        'access_token': fields.String
+    })
+    auth_response_with_refresh_token = api.inherit('auth_response_with_refresh_token', auth_response_with_token, {
+        'refresh_token': fields.String
+    })
+
+
 class UserDto:
     api = Namespace('User', description='사용자 API')
     profile = api.model('profile', {
