@@ -107,7 +107,7 @@ class PlaceReviewAPI(Resource):
             """
             rows = database.execute_all(sql, value)
             for row in rows:
-                row = reviewDetail(row, database, root_url)
+                reviewDetail(row, database, root_url)
                 sql = """
                     SELECT enabled FROM Review_User
                     WHERE review_id = %(review_id)s AND user_id = %(user_id)s
@@ -259,7 +259,7 @@ class ReviewDetailAPI(Resource):
 
             return {'message': f'Review ID \'{review_id}\' does not exist.'}, 400
         else:
-            row = reviewDetail(row, database, root_url)
+            reviewDetail(row, database, root_url)
             database.close()
 
             return row, 200

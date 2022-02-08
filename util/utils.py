@@ -31,8 +31,6 @@ def reviewDetail(row, database, root_url):
         else:
             row['profile_img'] = None
 
-    return row
-
 
 def reviewRatingAndNum(row, place_id, database):
     sql = """
