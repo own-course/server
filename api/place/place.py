@@ -273,7 +273,7 @@ class PlacesByCategoryAPI(Resource):
         for row in rows:
             reviewRatingAndNum(row, row['id'], database)
         for row in rows:
-            isLikedPlace(self, row, row['id'], database)
+            isLikedPlace(row, row['id'], self.user_id, database)
         for row in rows:
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
@@ -325,7 +325,7 @@ class PlaceInfoAPI(Resource):
             return {'message': f'Place id \'{place_id}\' does not exist.'}, 400
         else:
             reviewRatingAndNum(row, place_id, database)
-            isLikedPlace(self, row, row['id'], database)
+            isLikedPlace(row, row['id'], self.user_id, database)
 
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])

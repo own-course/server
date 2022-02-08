@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.recommend import recommend_poi
 import json
-from util.utils import codeToCategory, hashtagToArray, descriptionToArray, imgSelect
+from util.utils import codeToCategory, hashtagToArray, descriptionToArray, imgSelect, isLikedPlace, reviewRatingAndNum
 
 course = CourseDto.api
 _course_id = CourseDto.course_id
@@ -135,18 +135,8 @@ class RecommendCourseAPI(Resource):
 
                 del item['taste'], item['service'], item['cost'], item['tsc_score'], item['distance']
 
-                sql = """
-                    SELECT enabled FROM Place_User
-                    WHERE place_id = %(place_id)s AND user_id = %(user_id)s
-                """
-                like = database.execute_one(sql, value)
-                if like is None:
-                    item['like'] = False
-                else:
-                    if like['enabled'] == 0:
-                        item['like'] = False
-                    else:
-                        item['like'] = True
+                isLikedPlace(item, value['place_id'], value['user_id'], database)
+
                 item['img_url'] = imgSelect(item['categories'])
 
                 sql = """
@@ -176,30 +166,15 @@ class RecommendCourseAPI(Resource):
                 else:
                     row['descriptions'] = []
                 item['descriptions'] = row['descriptions']
-                sql = """
-                    SELECT * FROM Review 
-                    WHERE place_id = %(place_id)s
-                """
-                review_row = database.execute_one(sql, value)
-                if review_row is None:
-                    row['review_rating'] = 0
-                    row['review_num'] = 0
 
-                else:
-                    sql = """
-                        SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
-                        FROM Review
-                        WHERE place_id = %(place_id)s
-                    """
-                    review_row = database.execute_one(sql, value)
-                    row['review_rating'] = review_row['rating']
-                    row['review_num'] = review_row['review_num']
+                reviewRatingAndNum(row, value['place_id'], database)
                 item['review_rating'] = row['review_rating']
                 item['review_num'] = row['review_num']
 
         database.close()
 
         return courses, 200
+
 
 @course.doc(params={
     'category':
@@ -308,31 +283,9 @@ class RecommendCourseAPI(Resource):
 
             del place['taste'], place['service'], place['cost'], place['tsc_score'], place['distance']
 
-            sql = """
-                SELECT enabled FROM Place_User
-                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
-            """
-            like = database.execute_one(sql, value)
-            if like is None:
-                place['like'] = False
-            else:
-                if like['enabled'] == 0:
-                    place['like'] = False
-                else:
-                    place['like'] = True
-            sql = """
-                SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
-                FROM Review
-                WHERE place_id = %(place_id)s
-            """
-            review_row = database.execute_one(sql, value)
-            if review_row is None:
-                place['review_rating'] = 0
-                place['review_num'] = 0
-            else:
-                review_row = database.execute_one(sql, value)
-                place['review_rating'] = round(review_row['rating'], 1)
-                place['review_num'] = review_row['review_num']
+            isLikedPlace(place, value['place_id'], value['user_id'], database)
+            reviewRatingAndNum(place, value['place_id'], database)
+
             sql = """
                 SELECT hashtags FROM Place WHERE id = %(place_id)s
             """
@@ -345,6 +298,7 @@ class RecommendCourseAPI(Resource):
         database.close()
 
         return places, 200
+
 
 @course.route('')
 class SaveCourseAPI(Resource):
@@ -569,36 +523,9 @@ class SaveCourseDetailAPI(Resource):
         rows = database.execute_all(sql, value)
 
         for row in rows:
-            sql = """
-                SELECT enabled FROM Place_User
-                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
-            """
-            like = database.execute_one(sql, {'place_id': row['place_id'], 'user_id': self.user_id})
-            if like is None:
-                row['like'] = False
-            else:
-                if like['enabled'] == 0:
-                    row['like'] = False
-                else:
-                    row['like'] = True
-            sql = """
-                SELECT * FROM Review 
-                WHERE place_id = %(place_id)s
-            """
-            review_row = database.execute_one(sql, {'place_id': row['place_id']})
-            if review_row is None:
-                row['review_rating'] = 0
-                row['review_num'] = 0
+            isLikedPlace(row, row['place_id'], self.user_id, database)
+            reviewRatingAndNum(row, row['place_id'], database)
 
-            else:
-                sql = """
-                    SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
-                    FROM Review
-                    WHERE place_id = %(place_id)s
-                """
-                review_row = database.execute_one(sql, {'place_id': row['place_id']})
-                row['review_rating'] = review_row['rating']
-                row['review_num'] = review_row['review_num']
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
             if row['hashtags'] is not None:

@@ -47,12 +47,12 @@ def reviewRatingAndNum(row, place_id, database):
         row['review_num'] = review['review_num']
 
 
-def isLikedPlace(self, row, place_id, database):
+def isLikedPlace(row, place_id, user_id, database):
     sql = """
         SELECT enabled FROM Place_User
         WHERE place_id = %(place_id)s AND user_id = %(user_id)s
     """
-    like = database.execute_one(sql, {'place_id': place_id, 'user_id': self.user_id})
+    like = database.execute_one(sql, {'place_id': place_id, 'user_id': user_id})
     if like is None:
         row['like'] = False
     else:
