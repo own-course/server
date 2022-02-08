@@ -3,8 +3,8 @@ from flask_restx import Resource
 from util.dto import ReviewDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
-import json
 from util.upload import upload_file
+from util.utils import reviewDetail
 
 review = ReviewDto.api
 _review = ReviewDto.review
@@ -14,6 +14,7 @@ _review_error = ReviewDto.review_error
 _review_by_place = ReviewDto.review_by_place
 _review_img = ReviewDto.review_img
 _review_like = ReviewDto.review_like
+
 
 @review.route('/<int:place_id>')
 @review.doc(params={'place_id': 'place ID'})
@@ -106,33 +107,7 @@ class PlaceReviewAPI(Resource):
             """
             rows = database.execute_all(sql, value)
             for row in rows:
-                row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
-                if row['review_img'] is not None:
-                    imgs = row['review_img'][1:-1]
-                    imgs = imgs.split('","')
-                    review_img = []
-                    for img in imgs:
-                        review_img.append(root_url + img)
-                    row['review_img'] = review_img
-                else:
-                    row['review_img'] = []
-                if row['source'] != 'owncourse':
-                    if row['source'] == 'kakao_map':
-                        row['user_name'] = '카카오맵 사용자'
-                    else:
-                        row['user_name'] = None
-                    row['profile_img'] = None
-                else:
-                    sql = """
-                        SELECT nickname, profile_img FROM Profile
-                        WHERE user_id = %(user_id)s
-                    """
-                    profile = database.execute_one(sql, {'user_id': row['user_id']})
-                    row['user_name'] = profile['nickname']
-                    if profile['profile_img'] is not None:
-                        row['profile_img'] = root_url + profile['profile_img']
-                    else:
-                        row['profile_img'] = None
+                row = reviewDetail(row, database, root_url)
                 sql = """
                     SELECT enabled FROM Review_User
                     WHERE review_id = %(review_id)s AND user_id = %(user_id)s
@@ -153,6 +128,7 @@ class PlaceReviewAPI(Resource):
             database.close()
 
             return {'review_num': row['review_num'], 'result': rows}, 200
+
 
 @review.route('/<int:place_id>/img')
 @review.doc(params={'place_id': 'place ID'})
@@ -214,6 +190,7 @@ class GetPlaceReviewImgAPI(Resource):
 
         return {'review_num': review_num, 'review_img_num': review_img_num, 'result': result}, 200
 
+
 @review.route('/<int:review_id>/img')
 @review.doc(params={'review_id': 'review ID'})
 @review.response(400, 'Bad Request', _review_error)
@@ -258,6 +235,7 @@ class SetPlaceReviewImgAPI(Resource):
 
         return 200
 
+
 @review.route('/<int:review_id>/detail')
 @review.doc(params={'review_id': 'review ID'})
 @review.response(200, 'Success', _review_detail)
@@ -281,36 +259,11 @@ class ReviewDetailAPI(Resource):
 
             return {'message': f'Review ID \'{review_id}\' does not exist.'}, 400
         else:
-            row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
-            if row['review_img'] is not None:
-                imgs = row['review_img'][1:-1]
-                imgs = imgs.split('","')
-                review_img = []
-                for img in imgs:
-                    review_img.append(root_url + img)
-                row['review_img'] = review_img
-            else:
-                row['review_img'] = []
-            if row['source'] != 'owncourse':
-                if row['source'] == 'kakao_map':
-                    row['user_name'] = '카카오맵 사용자'
-                else:
-                    row['user_name'] = None
-                row['profile_img'] = None
-            else:
-                sql = """
-                    SELECT nickname, profile_img FROM Profile
-                    WHERE user_id = %(user_id)s
-                """
-                profile = database.execute_one(sql, {'user_id': row['user_id']})
-                row['user_name'] = profile['nickname']
-                if profile['profile_img'] is not None:
-                    row['profile_img'] = root_url + profile['profile_img']
-                else:
-                    row['profile_img'] = None
+            row = reviewDetail(row, database, root_url)
             database.close()
 
             return row, 200
+
 
 @review.route('/<int:review_id>/like')
 @review.response(200, 'Success', _review_like)

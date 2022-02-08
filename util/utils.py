@@ -1,4 +1,37 @@
+import json
 import random
+
+
+def reviewDetail(row, database, root_url):
+    row['created_at'] = json.dumps(row['created_at'].strftime('%Y-%m-%d %H:%M:%S'))
+    if row['review_img'] is not None:
+        imgs = row['review_img'][1:-1]
+        imgs = imgs.split('","')
+        review_img = []
+        for img in imgs:
+            review_img.append(root_url + img)
+        row['review_img'] = review_img
+    else:
+        row['review_img'] = []
+    if row['source'] != 'owncourse':
+        if row['source'] == 'kakao_map':
+            row['user_name'] = '카카오맵 사용자'
+        else:
+            row['user_name'] = None
+        row['profile_img'] = None
+    else:
+        sql = """
+            SELECT nickname, profile_img FROM Profile
+            WHERE user_id = %(user_id)s
+        """
+        profile = database.execute_one(sql, {'user_id': row['user_id']})
+        row['user_name'] = profile['nickname']
+        if profile['profile_img'] is not None:
+            row['profile_img'] = root_url + profile['profile_img']
+        else:
+            row['profile_img'] = None
+
+    return row
 
 
 def categoryToCode(category):
@@ -247,6 +280,7 @@ def hashtagToArray(hashtag):
     hashtags = hashtag.split(',')
 
     return hashtags
+
 
 def descriptionToArray(description):
     descriptions = description[2:-2].replace('},{', "|")
