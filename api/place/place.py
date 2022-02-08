@@ -4,7 +4,8 @@ from util.dto import PlaceDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.upload import upload_file
-from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray, imgSelect
+from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray, imgSelect, \
+    reviewRatingAndNum, isLikedPlace
 from util.recommend import recommend_poi
 
 place = PlaceDto.api
@@ -13,6 +14,7 @@ _place_by_category = PlaceDto.place_by_category
 _place_detail = PlaceDto.place_detail
 _place_like = PlaceDto.place_like
 _place_error = PlaceDto.place_error
+
 
 @place.doc(params={
     'latitude': {'description': 'latitude', 'in': 'query', 'type': 'float'},
@@ -24,7 +26,7 @@ class RecommendPlaceAPI(Resource):
     @jwt_required()
     def __init__(self, api=None, *args, **kwargs):
         super().__init__(api, args, kwargs)
-        
+
         parser = api.parser()
         parser.add_argument('latitude', type=float, required=True)
         parser.add_argument('longitude', type=float, required=True)
@@ -33,7 +35,7 @@ class RecommendPlaceAPI(Resource):
         self.user_id = get_jwt_identity()
         self.latitude = args['latitude']
         self.longitude = args['longitude']
-        self.distance = 500 # 반경 500m
+        self.distance = 500  # 반경 500m
 
     @place.doc(security='apiKey')
     def get(self):
@@ -73,10 +75,11 @@ class RecommendPlaceAPI(Resource):
 
         return place, 200
 
+
 @place.doc(params={
     'sort': {'description': 'location, popular or taste', 'in': 'query', 'type': 'string'},
     'page':
-            {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'},
+        {'description': 'pagination (start=1) 10개씩 반환', 'in': 'query', 'type': 'int'},
     'category': {'description': '배열로 입력 ex) ["전체"] or ["관광명소전체"] or ["관광명소전체","음식점전체","디저트전문",'
                                 '"공방","전시회"]\n\n'
                                 '관광명소: "관광명소전체", "공원", "야경/풍경", "식물원,수목원", "시장", "동물원", "지역축제", '
@@ -268,31 +271,9 @@ class PlacesByCategoryAPI(Resource):
                     """
             rows = database.execute_all(sql, value)
         for row in rows:
-            sql = """
-                    SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
-                    FROM Review
-                    WHERE place_id = %(place_id)s      
-            """
-            review = database.execute_one(sql, {'place_id': row['id']})
-            if review['rating'] is None:
-                row['review_rating'] = 0
-                row['review_num'] = 0
-            else:
-                row['review_rating'] = review['rating']
-                row['review_num'] = review['review_num']
+            reviewRatingAndNum(row, row['id'], database)
         for row in rows:
-            sql = """
-                SELECT enabled FROM Place_User
-                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
-            """
-            like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
-            if like is None:
-                row['like'] = False
-            else:
-                if like['enabled'] == 0:
-                    row['like'] = False
-                else:
-                    row['like'] = True
+            isLikedPlace(self, row, row['id'], database)
         for row in rows:
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
@@ -314,6 +295,7 @@ class PlacesByCategoryAPI(Resource):
             database.close()
 
             return make_response({'message': 'Invalid request.'}, 400)
+
 
 @place.route('/<int:place_id>')
 @place.response(200, 'Success', _place_detail)
@@ -342,36 +324,9 @@ class PlaceInfoAPI(Resource):
 
             return {'message': f'Place id \'{place_id}\' does not exist.'}, 400
         else:
-            sql = """
-                SELECT * FROM Review 
-                WHERE place_id = %(place_id)s
-            """
-            review_row = database.execute_one(sql, {'place_id': place_id})
-            if review_row is None:
-                row['review_rating'] = 0
-                row['review_num'] = 0
+            reviewRatingAndNum(row, place_id, database)
+            isLikedPlace(self, row, row['id'], database)
 
-            else:
-                sql = """
-                    SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
-                    FROM Review
-                    WHERE place_id = %(place_id)s
-                """
-                review_row = database.execute_one(sql, {'place_id': place_id})
-                row['review_rating'] = review_row['rating']
-                row['review_num'] = review_row['review_num']
-            sql = """
-                SELECT enabled FROM Place_User
-                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
-            """
-            like = database.execute_one(sql, {'place_id': row['id'], 'user_id': self.user_id})
-            if like is None:
-                row['like'] = False
-            else:
-                if like['enabled'] == 0:
-                    row['like'] = False
-                else:
-                    row['like'] = True
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
             row['categories'] = categories
@@ -393,6 +348,7 @@ class PlaceInfoAPI(Resource):
         database.close()
 
         return row, 200
+
 
 @place.route('/<int:place_id>/like')
 @place.response(200, 'Success', _place_like)

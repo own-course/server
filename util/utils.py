@@ -34,6 +34,36 @@ def reviewDetail(row, database, root_url):
     return row
 
 
+def reviewRatingAndNum(row, place_id, database):
+    sql = """
+           SELECT AVG(Review.rating) AS rating, COUNT(Review.id) AS review_num
+           FROM Review
+           WHERE place_id = %(place_id)s      
+    """
+    review = database.execute_one(sql, {'place_id': place_id})
+    if review['rating'] is None:
+        row['review_rating'] = 0
+        row['review_num'] = 0
+    else:
+        row['review_rating'] = review['rating']
+        row['review_num'] = review['review_num']
+
+
+def isLikedPlace(self, row, place_id, database):
+    sql = """
+        SELECT enabled FROM Place_User
+        WHERE place_id = %(place_id)s AND user_id = %(user_id)s
+    """
+    like = database.execute_one(sql, {'place_id': place_id, 'user_id': self.user_id})
+    if like is None:
+        row['like'] = False
+    else:
+        if like['enabled'] == 0:
+            row['like'] = False
+        else:
+            row['like'] = True
+
+
 def categoryToCode(category):
     categories = category[2:-2].replace('","', "|")
     categories = categories.split('|')
