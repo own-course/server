@@ -84,6 +84,30 @@ def isExistDescription(row):
         row['descriptions'] = []
 
 
+def getAvgPrice(place, place_id, database):
+    sql = """
+        SELECT AVG(CAST(price as FLOAT)) as avg_price FROM Place_Menu
+        WHERE place_id = %(place_id)s
+    """
+    row = database.execute_one(sql, {'place_id': place_id})
+    if row['avg_price'] != -1.0 and row['avg_price'] is not None:
+        place['avg_price'] = int(round(row['avg_price'], -3))
+    else:
+        place['avg_price'] = 0
+
+
+def getRepresentativeMenu(place, place_id, database):
+    sql = """
+        SELECT menu_name as representative_menu FROM Place_Menu
+        WHERE place_id = %(place_id)s AND representative = 1
+    """
+    row = database.execute_one(sql, {'place_id': place_id})
+    if row is None:
+        place['representative_menu'] = "정보없음"
+    else:
+        place['representative_menu'] = row['representative_menu']
+
+
 def categoryToCode(category):
     categories = category[2:-2].replace('","', "|")
     categories = categories.split('|')
