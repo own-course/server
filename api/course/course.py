@@ -4,7 +4,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.recommend import recommend_poi
 import json
-from util.utils import codeToCategory, hashtagToArray, descriptionToArray, imgSelect, isLikedPlace, reviewRatingAndNum
+from util.utils import codeToCategory, hashtagToArray, descriptionToArray, imgSelect, isLikedPlace, reviewRatingAndNum, \
+    isExistHashtag
 
 course = CourseDto.api
 _course_id = CourseDto.course_id
@@ -148,11 +149,10 @@ class RecommendCourseAPI(Resource):
                     item['phone'] = row['phone']
                 else:
                     item['phone'] = ""
-                if row['hashtags'] is not None:
-                    row['hashtags'] = hashtagToArray(row['hashtags'])
-                    item['hashtags'] = row['hashtags']
-                else:
-                    item['hashtags'] = []
+
+                isExistHashtag(row)
+                item['hashtags'] = row['hashtags']
+
                 if row['descriptions'] != "[]":
                     description = []
                     row['descriptions'] = descriptionToArray(row['descriptions'])
@@ -290,10 +290,8 @@ class RecommendCourseAPI(Resource):
                 SELECT hashtags FROM Place WHERE id = %(place_id)s
             """
             row = database.execute_one(sql, value)
-            if row['hashtags'] is not None:
-                place['hashtags'] = hashtagToArray(row['hashtags'])
-            else:
-                place['hashtags'] = []
+            isExistHashtag(row)
+            place['hashtags'] = row['hashtags']
 
         database.close()
 
@@ -528,9 +526,10 @@ class SaveCourseDetailAPI(Resource):
 
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
-            if row['hashtags'] is not None:
-                row['hashtags'] = hashtagToArray(row['hashtags'])
             row['categories'] = categories
+
+            isExistHashtag(row)
+
             if row['descriptions'] != "[]":
                 description = []
                 row['descriptions'] = descriptionToArray(row['descriptions'])

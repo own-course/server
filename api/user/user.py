@@ -5,7 +5,7 @@ from util.dto import UserDto
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.upload import upload_file
-from util.utils import keywordToVector, codeToCategory, hashtagToArray, imgSelect
+from util.utils import keywordToVector, codeToCategory, hashtagToArray, imgSelect, isExistHashtag
 
 user = UserDto.api
 _profile = UserDto.profile
@@ -214,8 +214,7 @@ class GetLikedPlaceAPI(Resource):
             row['review_num'] = review['review_num']
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
-            if row['hashtags'] is not None:
-                row['hashtags'] = hashtagToArray(row['hashtags'])
+            isExistHashtag(row)
             row['categories'] = categories
         database.close()
 

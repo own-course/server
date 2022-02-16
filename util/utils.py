@@ -62,6 +62,13 @@ def isLikedPlace(row, place_id, user_id, database):
             row['like'] = True
 
 
+def isExistHashtag(row):
+    if row['hashtags'] is not None:
+        row['hashtags'] = hashtagToArray(row['hashtags'])
+    else:
+        row['hashtags'] = []
+
+
 def categoryToCode(category):
     categories = category[2:-2].replace('","', "|")
     categories = categories.split('|')

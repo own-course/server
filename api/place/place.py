@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.upload import upload_file
 from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray, imgSelect, \
-    reviewRatingAndNum, isLikedPlace
+    reviewRatingAndNum, isLikedPlace, isExistHashtag
 from util.recommend import recommend_poi
 
 place = PlaceDto.api
@@ -52,22 +52,7 @@ class RecommendPlaceAPI(Resource):
             del item['taste'], item['service'], item['cost'], item['tsc_score']
             del item['distance'], item['latitude'], item['longitude']
 
-            value = {
-                'place_id': item['id'],
-                'user_id': self.user_id
-            }
-            sql = """
-                SELECT enabled FROM Place_User
-                WHERE place_id = %(place_id)s AND user_id = %(user_id)s
-            """
-            like = database.execute_one(sql, value)
-            if like is None:
-                item['like'] = False
-            else:
-                if like['enabled'] == 0:
-                    item['like'] = False
-                else:
-                    item['like'] = True
+            isLikedPlace(item, item['id'], self.user_id, database)
             item['img_url'] = imgSelect(item['categories'])
             place.append(item)
 
@@ -277,8 +262,7 @@ class PlacesByCategoryAPI(Resource):
         for row in rows:
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
-            if row['hashtags'] is not None:
-                row['hashtags'] = hashtagToArray(row['hashtags'])
+            isExistHashtag(row)
             row['categories'] = categories
 
         if self.sort == "location" or self.sort == "taste":
@@ -330,8 +314,7 @@ class PlaceInfoAPI(Resource):
             row['img_url'] = imgSelect(row['categories'])
             categories = codeToCategory(row['categories'])
             row['categories'] = categories
-            if row['hashtags'] is not None:
-                row['hashtags'] = hashtagToArray(row['hashtags'])
+            isExistHashtag(row)
             if row['descriptions'] != "[]":
                 description = []
                 row['descriptions'] = descriptionToArray(row['descriptions'])
