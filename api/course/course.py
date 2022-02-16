@@ -5,7 +5,7 @@ from database.database import Database
 from util.recommend import recommend_poi
 import json
 from util.utils import codeToCategory, hashtagToArray, descriptionToArray, imgSelect, isLikedPlace, reviewRatingAndNum, \
-    isExistHashtag
+    isExistHashtag, isExistDescription
 
 course = CourseDto.api
 _course_id = CourseDto.course_id
@@ -153,18 +153,7 @@ class RecommendCourseAPI(Resource):
                 isExistHashtag(row)
                 item['hashtags'] = row['hashtags']
 
-                if row['descriptions'] != "[]":
-                    description = []
-                    row['descriptions'] = descriptionToArray(row['descriptions'])
-                    for des in row['descriptions']:
-                        des_list = {}
-                        items = des.split(',"description":')
-                        des_list['source'] = items[0][9:]
-                        des_list['description'] = items[1]
-                        description.append(des_list)
-                    row['descriptions'] = description
-                else:
-                    row['descriptions'] = []
+                isExistDescription(row)
                 item['descriptions'] = row['descriptions']
 
                 reviewRatingAndNum(row, value['place_id'], database)
@@ -529,19 +518,7 @@ class SaveCourseDetailAPI(Resource):
             row['categories'] = categories
 
             isExistHashtag(row)
-
-            if row['descriptions'] != "[]":
-                description = []
-                row['descriptions'] = descriptionToArray(row['descriptions'])
-                for item in row['descriptions']:
-                    list = {}
-                    items = item.split(',"description":')
-                    list['source'] = items[0][9:]
-                    list['description'] = items[1]
-                    description.append(list)
-                row['descriptions'] = description
-            else:
-                row['descriptions'] = []
+            isExistDescription(row)
 
         database.close()
 

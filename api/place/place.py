@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.database import Database
 from util.upload import upload_file
 from util.utils import categoryToCode, codeToCategory, hashtagToArray, descriptionToArray, imgSelect, \
-    reviewRatingAndNum, isLikedPlace, isExistHashtag
+    reviewRatingAndNum, isLikedPlace, isExistHashtag, isExistDescription
 from util.recommend import recommend_poi
 
 place = PlaceDto.api
@@ -315,18 +315,7 @@ class PlaceInfoAPI(Resource):
             categories = codeToCategory(row['categories'])
             row['categories'] = categories
             isExistHashtag(row)
-            if row['descriptions'] != "[]":
-                description = []
-                row['descriptions'] = descriptionToArray(row['descriptions'])
-                for item in row['descriptions']:
-                    list = {}
-                    items = item.split(',"description":')
-                    list['source'] = items[0][9:]
-                    list['description'] = items[1]
-                    description.append(list)
-                row['descriptions'] = description
-            else:
-                row['descriptions'] = []
+            isExistDescription(row)
 
         database.close()
 

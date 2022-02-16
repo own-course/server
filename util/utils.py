@@ -69,6 +69,21 @@ def isExistHashtag(row):
         row['hashtags'] = []
 
 
+def isExistDescription(row):
+    if row['descriptions'] != "[]":
+        description = []
+        row['descriptions'] = descriptionToArray(row['descriptions'])
+        for des in row['descriptions']:
+            des_list = {}
+            items = des.split(',"description":')
+            des_list['source'] = items[0][9:]
+            des_list['description'] = items[1]
+            description.append(des_list)
+        row['descriptions'] = description
+    else:
+        row['descriptions'] = []
+
+
 def categoryToCode(category):
     categories = category[2:-2].replace('","', "|")
     categories = categories.split('|')
