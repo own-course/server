@@ -219,6 +219,8 @@ class CourseDto:
         'representative_menu': fields.String,
         'like': fields.Boolean,
         'img_url': fields.String(example="http://owncourse.seongbum.com/static/uploads/FD1.jpeg"),
+        'address': fields.String,
+        'road_address': fields.String,
         'phone': fields.String,
         'hashtags': fields.Raw(example=["조용한", "데이트"]),
         'descriptions': fields.List(fields.Nested(course_place_description)),

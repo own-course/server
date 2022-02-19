@@ -125,10 +125,14 @@ class RecommendCourseAPI(Resource):
                 item['img_url'] = imgSelect(item['categories'])
 
                 sql = """
-                    SELECT hashtags, phone, descriptions FROM Place
+                    SELECT hashtags, phone, descriptions, address, road_address FROM Place
                     WHERE id = %(place_id)s
                 """
                 row = database.execute_one(sql, value)
+
+                item['address'] = row['address']
+                item['road_address'] = row['address']
+
                 if row['phone'] is not None:
                     item['phone'] = row['phone']
                 else:
@@ -244,11 +248,23 @@ class RecommendCourseAPI(Resource):
             reviewRatingAndNum(place, value['place_id'], database)
 
             sql = """
-                SELECT hashtags FROM Place WHERE id = %(place_id)s
+                SELECT hashtags, phone, descriptions, address, road_address FROM Place
+                WHERE id = %(place_id)s
             """
             row = database.execute_one(sql, value)
+
+            place['address'] = row['address']
+            place['road_address'] = row['address']
+
+            if row['phone'] is not None:
+                place['phone'] = row['phone']
+            else:
+                place['phone'] = ""
+
             isExistHashtag(row)
             place['hashtags'] = row['hashtags']
+            isExistDescription(row)
+            place['descriptions'] = row['descriptions']
 
         database.close()
 
