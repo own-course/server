@@ -254,7 +254,7 @@ class CourseDto:
         'place_id': fields.Integer(example=1),
         'place_order': fields.Integer(example=1),
         'avg_cost': fields.Integer(example=20000),
-        'popular_menu': fields.String,
+        'representative_menu': fields.String,
         'name': fields.String,
         'address': fields.String,
         'road_address': fields.String,

@@ -468,7 +468,8 @@ class SaveCourseDetailAPI(Resource):
             return {'message': f'Course id \'{course_id}\' does not exist.'}, 400
 
         sql = """
-            SELECT Course_Place.place_id, Course_Place.place_order, Course_Place.avg_cost, Course_Place.popular_menu,
+            SELECT Course_Place.place_id, Course_Place.place_order, Course_Place.avg_cost, 
+            Course_Place.popular_menu as representative_menu,
             Place.name, Place.address, Place.road_address, Place.categories, Place.hashtags,
             Place.phone, Place.longitude, Place.latitude, Place.descriptions
             FROM Course_Place JOIN Place
